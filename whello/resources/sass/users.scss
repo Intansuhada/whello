@@ -1,0 +1,453 @@
+/* Import font dan font-awesome */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');
+
+/* Global styles */
+* {
+    font-family: "Inter", sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.user-info-wrapper {
+    padding-left: 192px;
+}
+
+.user-info {
+    padding: 20px 24px;
+}
+
+.user-invite-overview {
+    display: flex;
+    flex-flow: row wrap;
+    border: 1px solid #ccc;
+}
+
+.user-overview {
+    width: 70%;
+    padding: 20px;
+}
+
+.user-invite {
+    width: 380px;
+    padding: 10px;
+    border-right: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    position: relative;
+}
+
+.invite-btn {
+    background-color: #2383E2;
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    border-radius: 4%;
+    padding: 5px;
+}
+
+.invite-btn img {
+    margin-right: 5px;
+}
+
+.icons-container {
+    display: flex;
+    align-items: center;
+}
+
+.icons-container img {
+    width: 20px;
+    margin-left: 10px;
+}
+
+.invite-people {
+    border: 1px solid black;
+    padding: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 360px;
+    position: relative;
+    margin-bottom: 5px;
+}
+
+.userinvite-divider {
+    width: 360px;
+    height: 1px;
+    background-color: whitesmoke;
+    list-style: none;
+    margin: 5px 0;
+    padding: 0;
+    align-self: stretch;
+}
+
+.search-container {
+    position: relative;
+    width: 360px;
+    margin-top: 5px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 10px 10px 30px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ccc;
+    font-size: 16px;
+}
+
+/* CSS untuk profil pengguna */
+.user-profile {
+    display: flex;
+    align-items: center;
+    width: 330px;
+    height: 44px;
+    margin-top: 10px;
+    padding: 10px;
+}
+
+.profile-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px; /* ubah ukuran teks menjadi 14px */
+    margin-bottom: 1px;
+}
+.profile-info p {
+    margin-bottom: 1px;
+}
+.profile-name {
+    font-size: 14px; /* ubah ukuran teks menjadi 14px */
+    font-weight: normal;
+    color: rgb(0, 0, 0);
+    margin: 0;
+    margin-bottom: 1px; /* beri jarak bawah antara profile name dan placeholder search */
+}
+
+.profile-position {
+    font-size: 12px;
+    color: grey;
+    margin: 0;
+}
+
+/* CSS untuk detail pengguna */
+.user-detail {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.detail-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 20px;
+}
+
+.detail-info {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.detail-text {
+    flex-grow: 1;
+}
+
+.detail-name-input, .detail-id-input, .detail-position-input, .detail-count-input, .detail-time-input {
+    font-size: 16px;
+    border: none;
+    background: none;
+    width: 100%;
+    margin-bottom: 2px;
+}
+
+.detail-name-input {
+    font-weight: bold;
+}
+
+.detail-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.detail-id-input, .detail-position-input, .detail-count-input, .detail-time-input {
+    font-size: 14px;
+    color: grey;
+    margin-right: 5px;
+    margin-bottom: 2px;
+}
+
+.detail-id-input, .detail-position-input, .detail-count-input, .detail-time-input {
+    flex: 1;
+    min-width: 150px;
+}
+
+.detail-buttons {
+    display: flex;
+    align-items: center;
+    margin-left: auto; /* Pushes buttons to the right */
+}
+
+.users-edit, .users-remove {
+    margin-left: 10px;
+}
+
+.users-setting {
+    margin-left: 20px; /* Add specific margin to create a gap */
+}
+
+.users-edit-btn, .users-rmv-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    border: none;
+    background: #f0f0f0;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.users-edit-btn img, .users-rmv-btn img {
+    margin-right: 5px;
+}
+
+.setting-icon {
+    width: 20px;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+/* CSS untuk tab menu */
+.tab-menu {
+    display: flex;
+    margin-top: 20px;
+    border-bottom: 1px solid #ccc;
+}
+
+.tablink {
+    padding: 10px 20px;
+    text-decoration: none;
+    color: grey;
+    
+    border-bottom: 3px solid transparent;
+    transition: color 0.3s, border-bottom 0.3s;
+}
+
+.tablink:hover, .tablink.active {
+    color: #2383E2;
+    border-bottom: 3px solid #2383E2;
+}
+
+.tab-content {
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-top: none;
+    margin-top: -1px;
+}
+
+/* CSS untuk form di dalam overview-detail */
+.overview-detail {
+    margin-top: 20px;
+}
+
+.overview-detail .form-group {
+    margin-bottom: 1px;
+}
+
+.overview-detail label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #454B51;
+}
+
+.overview-detail input[type="text"] {
+    width: calc(30% - 12px);
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f2f5f9;
+    transition: background-color 0.3s ease, border-color 0.3s ease; /* Transition for border color */
+}
+
+/* Hover state untuk input text */
+.overview-detail input[type="text"]:hover {
+    border-color: #2383E2;
+    color: #fff;
+}
+
+/* Focus state untuk input text */
+.overview-detail input[type="text"]:focus {
+    border-color: #2383E2; /* Border color becomes blue on focus */
+    outline: none; /* Remove default outline */
+    color: black; /* Ensure text color stays black */
+}
+
+/* CSS untuk Popup */
+.invite-popup {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Popup Content */
+.popup-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 30%; /* Could be more or less, depending on screen size */
+    border-radius: 8px;
+}
+
+/* Close button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Button Styling */
+.send-btn {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    padding: 12px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    border-radius: 4px;
+}
+
+.send-btn:hover {
+    background-color: #2383e2;
+}
+
+/* Form Styling */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group input {
+    width: calc(100% - 22px); /* Full width - padding */
+    padding: 10px;
+    margin: 5px 0 22px 0;
+    display: inline-block;
+    border: none;
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.form-group input:focus {
+    background-color: #ddd;
+    outline: none;
+}
+
+/* Responsive Styles */
+@media (max-width: 1200px) {
+    .user-invite {
+        width: 100%;
+        border-right: none;
+    }
+
+    .user-overview {
+        width: 100%;
+    }
+
+    .user-invite-overview {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .user-info-wrapper {
+        padding-left: 0;
+    }
+
+    .user-invite-overview {
+        padding: 10px;
+    }
+
+    .user-detail .detail-row {
+        flex-direction: column;
+    }
+
+    .detail-id-input, .detail-position-input, .detail-count-input, .detail-time-input {
+        min-width: 100%;
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .invite-people {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .invite-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .icons-container {
+        justify-content: space-around;
+        width: 100%;
+    }
+
+    .search-container {
+        width: 100%;
+    }
+
+    .user-profile {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .popup-content {
+        width: 80%; /* Adjust width for smaller screens */
+    }
+}

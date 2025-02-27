@@ -1,0 +1,229 @@
+.user-icon {
+    margin-left: 20px;
+    font-size: 24px;
+    color: #333;
+    cursor: pointer;
+}
+
+.sidebar {
+    background-color: #ffffff;
+    width: 230px; /* Lebar sidebar sama dengan logo */
+    border-right: 1px solid #e1e4e8;
+    height: 100%;
+}
+
+.sidebar-logo {
+    width: 120px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    text-align: left;
+}
+
+.sidebar-logo img {
+    width: 100%; /* Memastikan gambar mengisi ruang yang tersedia */
+    height: auto; /* Mengatur ketinggian secara otomatis sesuai proporsi */
+
+}
+
+.sidebar-divider-nav {
+    height: 49px;
+    border-left: 1px solid #e1e4e8;
+    margin: 0 20px;
+}
+
+.sidebar-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.sidebar-search-input {
+    width: 30%;
+    height: 34px;
+    background-color: #f0f2f5;
+    padding: 10px 40px;
+    border: 1px solid #f0f2f5;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.sidebar-search-input:hover {
+
+}
+
+.sidebar-search-input:focus {
+    border: 1px solid #e1e4e8;
+}
+
+input::placeholder {
+    font-size: 14px;
+    color: #a0a8b1;
+}
+
+input:focus-visible {
+    outline: none;
+}
+
+.sidebar-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 10px; /* Adjust as needed */
+    transform: translateY(-50%);
+    width: 16px; /* Adjust size as needed */
+    height: auto;
+    pointer-events: none; /* Ensure the icon doesn't block input clicks */
+}
+
+.sidebar-menu {
+    list-style-type: none;
+    padding: 20px;
+    margin: 0;
+    position: sticky;
+    top: 50px;
+}
+
+.sidebar-item {
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.sidebar-item .sidebar-link {
+    color: black; /* Mengubah warna teks menjadi hitam */
+    text-decoration: none; /* Menghilangkan garis bawah pada tautan */
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-item .sidebar-link:hover {
+    color: #007bff;
+}
+
+.sidebar-item .sidebar-link span{
+    margin: 0px 0px 0px 6px;
+}
+
+.sidebar-item.active {
+    background-color: #e1e4e8;
+    padding: 5px 12px 5px 2px;
+    border-radius: 5px;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background-color: #e1e4e8;
+    margin: 10px 0;
+}
+
+/* // profile user sidebar */
+
+/* icon-profile */
+.sidebar-user-icon {
+    background: #ffffff; /* Latar belakang biru semi-transparan */
+    border-radius: 50px; /* Membuat sudut teks sedikit melengkung */
+    width: 106px;
+    height: 34px;
+    box-sizing: border-box;
+    padding: 2px;
+}
+.sidebar-profile-name{
+    display: flex;
+    align-items: center;
+}
+.sidebar-profile-img{
+    border: 2px solid #2383E2;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    margin-right: 8px;
+}
+.sidebar-profile-name span{
+    font-size: 14px;
+    color: #292D32;
+}
+.sidebar-profile-arrow {
+    margin-left: 8px;
+}
+
+/* end icon-profile */
+
+.submenu {
+    list-style-type: none; /* Remove bullets */
+    padding: 0; /* Remove padding */
+    margin: 10px 0px 0px 14px; /* Remove margin */
+}
+
+.submenu li {
+    display: inline-block; /* Display list items inline block */
+    margin-bottom: 10px;
+    width: 100%; /* Membatasi lebar list item menjadi 100% */
+    font-size: 14px;
+    padding: 6px;
+}
+
+.submenu a {
+    text-decoration: none; /* Remove underline */
+    color: #000; /* Example: Change link color */
+    padding: 5px; /* Example: Add padding */
+}
+
+.submenu li:hover {
+    text-decoration: none;
+    background-color: #e1e4e8;
+    border-radius: 3px;
+}
+
+/* dropdown */
+
+.submenu {
+    display: none;
+    list-style: none;
+    padding: 0;
+    margin: 15px 0 0 18px;
+    min-width: 160px;
+}
+
+.sidebar-item.setting:hover .submenu,
+.sidebar-item.setting:focus-within .submenu {
+    display: block;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .navbar-left, .navbar-center, .navbar-right {
+        flex: 1 100%;
+        text-align: center;
+    }
+
+    .sidebar-search-input {
+        width: 80%;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        top: 0;
+        left: 0;
+        bottom: auto;
+        border-right: none;
+        border-bottom: 1px solid #e1e4e8;
+    }
+
+    .sidebar-menu {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap; /* Membuat item menyesuaikan lebar layar */
+    }
+
+    .sidebar-item {
+        width: 50%; /* Menyesuaikan lebar item pada layar kecil */
+        margin-bottom: 5px; /* Jarak antar item */
+    }
+
+    .sidebar-link {
+        text-align: center;
+    }
+}
