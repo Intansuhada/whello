@@ -32,9 +32,18 @@ class Profile extends Model
     protected $fillable = [
         'user_id',
         'nickname',
-        'name',
-        'avatar',
+        'full_name',
         'about',
+        'department_id',
+        'job_title_id'
+    ];
+
+    // Tambahkan casting jika diperlukan
+    protected $casts = [
+        'department_id' => 'integer',
+        'job_title_id' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**
@@ -42,7 +51,7 @@ class Profile extends Model
      */
     public function user()
     {
-        return $this->hasOne(User::class);
+        return $this->belongsTo(User::class);
     }
 
     public function jobTitle(): BelongsTo {

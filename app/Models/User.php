@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -33,6 +34,7 @@ class User extends Authenticatable
         'email',
         'role_id',
         'password',
+        'avatar_url',  // Pastikan field ini ada
     ];
 
     /**
@@ -58,10 +60,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the profile that owns the user.
+     * Get the profile associated with the user.
      */
-    public function profile() : HasOne {
-        return $this->hasOne(Profile::class);
+    public function profile(): HasOne
+    {
+        return $this->hasOne(UserProfile::class);
     }
 
     /**
@@ -76,6 +79,30 @@ class User extends Authenticatable
      */
     public function clients()
     {
-        return $this->hasMany(Client::class);
+        return $this->belongsToMany(Client::class, 'client_user');
+    }
+
+    /**
+     * Get the working hours that belong to the user.
+     */
+    public function workingHours()
+    {
+        return $this->hasMany(WorkingHour::class);
+    }
+
+    /**
+     * Get the notification preferences that belong to the user.
+     */
+    public function notificationPreferences()
+    {
+        return $this->hasOne(NotificationPreference::class);
+    }
+
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->profile && $this->profile->avatar) {
+            return Storage::url($this->profile->avatar);
+        }
+        return asset('images/change-photo.svg');
     }
 }

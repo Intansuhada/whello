@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Models\UserInvite;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -26,20 +27,18 @@ class UserController extends Controller
      */
     public function index()
     {
-        try {
-            $users = User::with(['profile.jobTitle'])->get();
-            $firstUser = null; // Set firstUser ke null agar tidak ada user yang terpilih otomatis
-            $inactivatedAccounts = InactivatedAccount::where('expires_at', '>', now())->get();
-
-            return view('users', compact(
-                'users', 
-                'firstUser', 
-                'inactivatedAccounts'
-            ));
-        } catch (\Exception $e) {
-            \Log::error('Error in index: ' . $e->getMessage());
-            return view('users')->with('error', 'Failed to load users');
+        $users = User::with(['profile.jobTitle', 'role'])->get();
+        
+        // Debug logging
+        foreach($users as $user) {
+            \Log::info('User profile:', [
+                'user_id' => $user->id,
+                'has_profile' => $user->profile ? 'yes' : 'no',
+                'job_title' => $user->profile?->jobTitle?->name ?? 'none'
+            ]);
         }
+        
+        return view('users', compact('users'));
     }
 
     /**
@@ -94,10 +93,18 @@ class UserController extends Controller
 
                 Log::info('Invite record created', ['id' => $invite->id]);
 
-                // Try to send email
-                Log::info('Attempting to send email...');
-                Mail::to($request->email)->send(new UserInvitationMail($request->email, $token));
-                Log::info('Email sent successfully');
+                // Add detailed logging for email sending
+                Log::info('Attempting to send email to: ' . $request->email);
+                try {
+                    Mail::to($request->email)->send(new UserInvitationMail($request->email, $token));
+                    Log::info('Email sent successfully to: ' . $request->email);
+                } catch (\Swift_TransportException $e) {
+                    Log::error('SMTP Error: ' . $e->getMessage());
+                    throw new \Exception('Email service is not properly configured. Please contact administrator.');
+                } catch (\Exception $e) {
+                    Log::error('Email Error: ' . $e->getMessage());
+                    throw $e;
+                }
 
                 // If we got here, everything worked
                 DB::commit();
@@ -109,14 +116,14 @@ class UserController extends Controller
 
             } catch (\Exception $e) {
                 DB::rollBack();
-                Log::error('Error during invitation process: ' . $e->getMessage());
+                Log::error('Invitation process error: ' . $e->getMessage());
                 throw $e;
             }
         } catch (\Exception $e) {
             Log::error('Invitation failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to send invitation. Please try again.'
+                'error' => 'Failed to send invitation: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -288,50 +295,95 @@ class UserController extends Controller
         }
     }
 
+    public function edit($id)
+    {
+        $user = User::with('profile')->findOrFail($id);
+        return view('users.edit', compact('user'));
+    }
+
     public function update(Request $request, $id)
     {
+        $user = User::findOrFail($id);
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'department_id' => 'nullable|exists:departments,id',
+            'job_title_id' => 'nullable|exists:job_titles,id',
+            'avatar' => 'nullable|image|max:2048'
+        ]);
+
         try {
-            $user = User::findOrFail($id);
-            
-            $validator = Validator::make($request->all(), [
-                'name' => 'nullable|string|max:255',
-                'email' => 'required|email|unique:users,email,' . $id,
-                'role_id' => 'nullable|exists:roles,id',
-                'job_title' => 'nullable|exists:job_titles,id',
-                'department' => 'nullable|string|max:255',
+            DB::beginTransaction();
+
+            // Update user email if changed
+            $user->update([
+                'email' => $validated['email']
             ]);
 
-            if ($validator->fails()) {
-                return response()->json(['error' => $validator->errors()->first()], 422);
+            // Create or update profile
+            $profile = $user->profile ?? new \App\Models\UserProfile();
+            $profile->user_id = $user->id; // Pastikan user_id terisi
+            $profile->name = $validated['name'];
+            $profile->department_id = $validated['department_id'] ?? null;
+            $profile->job_title_id = $validated['job_title_id'] ?? null;
+
+            // Handle avatar upload jika ada
+            if ($request->hasFile('avatar')) {
+                // Hapus avatar lama jika ada
+                if ($profile->avatar) {
+                    Storage::delete('public/' . $profile->avatar);
+                }
+                $path = $request->file('avatar')->store('avatars', 'public');
+                $profile->avatar = $path;
             }
 
-            $user->update($request->all());
-            
-            $updatedUser = User::select('users.*', 'roles.name as role_name', 'job_titles.name as job_title_name')
-                ->leftJoin('roles', 'users.role_id', '=', 'roles.id')
-                ->leftJoin('job_titles', 'users.job_title', '=', 'job_titles.id')
-                ->where('users.id', $id)
-                ->first();
+            // Simpan profile
+            if (!$user->profile) {
+                $user->profile()->save($profile);
+            } else {
+                $profile->save();
+            }
+
+            DB::commit();
 
             return response()->json([
-                'success' => 'User updated successfully',
-                'user' => $updatedUser
+                'success' => true,
+                'message' => 'Profile updated successfully',
+                'data' => [
+                    'user' => $user->load('profile'),
+                    'avatar_url' => $profile->avatar ? Storage::url($profile->avatar) : null
+                ]
             ]);
+
         } catch (\Exception $e) {
-            \Log::error('Update error: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to update user'], 500);
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to update profile: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function destroy($id)
     {
-        try {
-            $user = User::findOrFail($id);
-            $user->delete();
-            return response()->json(['success' => 'User deleted successfully']);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to delete user'], 500);
+        $user = User::findOrFail($id);
+        
+        // Delete avatar if exists
+        if ($user->profile && $user->profile->avatar) {
+            Storage::delete('public/' . $user->profile->avatar);
         }
+        
+        // Delete profile and user
+        if ($user->profile) {
+            $user->profile->delete();
+        }
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User removed successfully'
+        ]);
     }
 
     // Update getRoleId helper function if you have it

@@ -57,28 +57,130 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    editBtn.addEventListener('click', function() {
-        if (!selectedUserId) {
-            showNotification('Please select a user first', 'error');
+    if (editBtn) {
+        editBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Mencegah event bubbling
+            const activeUser = document.querySelector('.user-profile.active');
+            if (activeUser) {
+                const userId = activeUser.getAttribute('data-user-id');
+                window.location.href = `/users/${userId}/edit`;
+            }
+        });
+    }
+
+    if (removeBtn) {
+        removeBtn.addEventListener('click', async function(e) {
+            e.stopPropagation(); // Mencegah event bubbling
+            const activeUser = document.querySelector('.user-profile.active');
+            if (!activeUser) return;
+
+            const userId = activeUser.getAttribute('data-user-id');
+            const userName = activeUser.querySelector('.profile-name').textContent;
+
+            if (confirm(`Apakah Anda yakin ingin menghapus ${userName}?`)) {
+                try {
+                    const response = await fetch(`/users/${userId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Hapus elemen user dari DOM
+                        activeUser.remove();
+                        // Reset tampilan detail
+                        document.getElementById('userDetailSection').style.display = 'none';
+                        document.getElementById('tabMenuSection').style.display = 'none';
+                        document.getElementById('tabContentSection').style.display = 'none';
+                        document.getElementById('noUserSelected').style.display = 'flex';
+                        
+                        // Tampilkan notifikasi sukses
+                        const notification = document.createElement('div');
+                        notification.className = 'notify-popup';
+                        notification.innerHTML = `
+                            <div class="notify-invite">
+                                <div class="notify-content">
+                                    <p>User berhasil dihapus</p>
+                                    <button type="button" class="oke-btn">Oke</button>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(notification);
+                        setTimeout(() => notification.remove(), 3000);
+                    } else {
+                        alert(data.error || 'Gagal menghapus user');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error saat menghapus user');
+                }
+            }
+        });
+    }
+
+    // Perbaikan fungsi edit dan remove
+    document.querySelector('.users-edit-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const activeUser = document.querySelector('.user-profile.active');
+        if (!activeUser) {
+            showNotification('Pilih user terlebih dahulu', 'error');
             return;
         }
 
-        const isEditing = this.innerText.trim() === 'Save';
-        if (isEditing) {
-            saveUserDetails(selectedUserId);
-        } else {
-            enableEditing();
-            this.innerHTML = '<img src="/images/save.svg" alt="save">Save';
+        const userId = activeUser.getAttribute('data-user-id');
+        if (userId) {
+            window.location.href = `/users/${userId}/edit`;
         }
     });
 
-    removeBtn.addEventListener('click', function() {
-        if (!selectedUserId) {
-            showNotification('Please select a user first', 'error');
+    document.querySelector('.users-rmv-btn').addEventListener('click', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const activeUser = document.querySelector('.user-profile.active');
+        if (!activeUser) {
+            showNotification('Pilih user terlebih dahulu', 'error');
             return;
         }
-        if (confirm('Are you sure you want to remove this user?')) {
-            removeUser(selectedUserId);
+
+        const userId = activeUser.getAttribute('data-user-id');
+        const userName = activeUser.querySelector('.profile-name').textContent;
+
+        if (confirm(`Apakah Anda yakin ingin menghapus ${userName}?`)) {
+            try {
+                const response = await fetch(`/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Hapus element dari DOM
+                    activeUser.remove();
+                    
+                    // Reset tampilan detail
+                    document.getElementById('userDetailSection').style.display = 'none';
+                    document.getElementById('tabMenuSection').style.display = 'none';
+                    document.getElementById('tabContentSection').style.display = 'none';
+                    document.getElementById('noUserSelected').style.display = 'flex';
+                    
+                    showNotification('User berhasil dihapus', 'success');
+                } else {
+                    showNotification(data.error || 'Gagal menghapus user', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Error saat menghapus user', 'error');
+            }
         }
     });
 

@@ -79,7 +79,7 @@
                 <a href="#" class="sidebar-link">
                     <img src="{{ asset('images/settings.svg') }}" alt="Settings Icon" class="icon">
                     <span>Settings</span>
-                    <img src="{{ asset('images/arrow-down.svg') }}" alt="Avatar" class="sidebar-arrow">
+                    <img src="{{ asset('images/arrow-down.svg') }}" alt="" class="sidebar-arrow">
                 </a>
                 <ul class="submenu">
                     <li><a href="{{ route('settings.profile') }}" class="submenu-link">Profile</a></li>

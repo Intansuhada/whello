@@ -8,6 +8,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileSettingsController;
 use App\Http\Controllers\UserTabController;
+use App\Http\Controllers\ProfileController;
 
 Route::name('auth.')->group(function() {
     Route::get('/', [AuthController::class, 'signinView'])->name('signin-page');
@@ -60,7 +61,13 @@ Route::name('settings.')->prefix('settings')->group(function() {
     Route::put('/profile/change-username', [ProfileSettingsController::class, 'changeUsername'])->name('profile.change-username');
     Route::put('/profile/change-password', [ProfileSettingsController::class, 'changePassword'])->name('profile.change-password');
     Route::post('/profile/verify-new-email', [ProfileSettingsController::class, 'verifyNewEmail'])->name('profile.verify-new-email');
+    Route::put('/profile/working-hours', [ProfileSettingsController::class, 'updateWorkingHours'])->name('profile.working-hours');
     Route::get('/system', [SettingsController::class, 'system'])->name('system');
+});
+
+Route::prefix('settings/profile')->name('settings.profile.')->middleware(['auth'])->group(function () {
+    Route::put('/security', [App\Http\Controllers\ProfileController::class, 'updateSecurity'])->name('security.update');
+    Route::put('/notifications', [App\Http\Controllers\ProfileController::class, 'updateNotifications'])->name('notifications.update');
 });
 
 Route::get('/activate-account/{token}', [UserController::class, 'activateAccountView'])->name('activate-account-view');
@@ -86,5 +93,15 @@ Route::middleware(['auth'])->group(function () {
         
         // Hapus route yang duplikat, gunakan hanya satu route untuk invite
         Route::post('/users/invite', [UserController::class, 'invite'])->name('users.invite');
-    });
+        
+        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::get('/users/{user}/edit', 'UserController@edit')->name('users.edit');
+        Route::delete('/users/{user}', 'UserController@destroy')->name('users.destroy');    });
+
+    // Profile routes
+    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/settings/profile/update', [ProfileController::class, 'update'])
+         ->name('settings.profile.update');
 });
+
+Route::get('/settings/system', [App\Http\Controllers\SettingsController::class, 'system'])->name('settings.system');

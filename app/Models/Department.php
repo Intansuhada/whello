@@ -6,13 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Department extends Model
 {
-    public $timestamps = false;
+    protected $fillable = ['name'];
 
-    protected $fillable = [
-        'name',
-    ];
-
-    public function jobTitles() {
+    public function jobTitles()
+    {
         return $this->hasMany(JobTitle::class);
     }
 }

@@ -6,40 +6,53 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\JobTitle;
+use App\Models\Department;  // Add this import
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Facades\Image;
 
 class ProfileSettingsController extends Controller
 {
     public function index()
     {
         $user = Auth::user();
-        $jobTitles = JobTitle::all();
-        return view('settings.profile', compact('user', 'jobTitles'));
+        $jobTitles = JobTitle::with('department')->get();
+        $departments = Department::with('jobTitles')->get();
+        
+        return view('settings.profile', compact('user', 'jobTitles', 'departments'));
     }
 
     public function changePhoto(Request $request)
     {
         $request->validate([
-            'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'photo' => 'required|image|max:2048'
         ]);
 
         try {
-            $user = Auth::user();
-            $fileName = time() . '.' . $request->photo->extension();
-            $request->photo->move(public_path('images/avatars'), $fileName);
+            $user = auth()->user();
+            $file = $request->file('photo');
+            
+            // Generate filename
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            // Save file
+            $file->storeAs('public/avatars', $filename);
 
-            $user->profile()->update([
-                'avatar' => $fileName
-            ]);
+            // Update profile
+            $user->profile()->updateOrCreate(
+                ['user_id' => $user->id],
+                ['avatar' => $filename]
+            );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Profile photo updated successfully',
-                'path' => url('images/avatars/' . $fileName)
+                'path' => asset('storage/avatars/' . $filename),
+                'message' => 'Photo updated successfully'
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update profile photo'
+                'message' => 'Failed to update photo: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -47,23 +60,18 @@ class ProfileSettingsController extends Controller
     public function deletePhoto()
     {
         try {
-            $user = Auth::user();
+            $user = auth()->user();
             
             if ($user->profile && $user->profile->avatar) {
-                $path = public_path('images/avatars/' . $user->profile->avatar);
-                if (file_exists($path)) {
-                    unlink($path);
-                }
+                Storage::disk('public')->delete('avatars/' . $user->profile->avatar);
+                $user->profile->update(['avatar' => null]);
             }
-
-            $user->profile()->update([
-                'avatar' => null
-            ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Profile photo deleted successfully'
             ]);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -75,25 +83,35 @@ class ProfileSettingsController extends Controller
     public function update(Request $request)
     {
         try {
-            $user = Auth::user();
+            $user = auth()->user();
             
-            $request->validate([
+            $validated = $request->validate([
                 'nickname' => 'required|string|max:255',
                 'name' => 'required|string|max:255',
                 'about' => 'nullable|string',
-                'job_title' => 'nullable|exists:job_titles,id'
+                'job_title' => 'required|exists:job_titles,id',
             ]);
 
-            $user->profile()->update([
-                'nickname' => $request->nickname,
-                'name' => $request->name,
-                'about' => $request->about,
-                'job_title_id' => $request->job_title
-            ]);
+            // Update profile
+            $user->profile()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'nickname' => $validated['nickname'],
+                    'name' => $validated['name'],
+                    'about' => $validated['about'],
+                    'job_title_id' => $validated['job_title'],
+                ]
+            );
 
-            return redirect()->back()->with('success', 'Profile updated successfully');
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile berhasil diperbaharui'
+            ]);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to update profile');
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbaharui profile'
+            ], 500);
         }
     }
 
@@ -166,6 +184,46 @@ class ProfileSettingsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to verify new email'
+            ], 500);
+        }
+    }
+
+    public function updateWorkingHours(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            
+            foreach ($days as $day) {
+                if ($request->has($day)) {
+                    WorkingHour::updateOrCreate(
+                        [
+                            'user_id' => $user->id,
+                            'day' => $day
+                        ],
+                        [
+                            'morning_start' => $request->input($day . '_morning_start'),
+                            'morning_end' => $request->input($day . '_morning_end'),
+                            'afternoon_start' => $request->input($day . '_afternoon_start'),
+                            'afternoon_end' => $request->input($day . '_afternoon_end'),
+                            'is_active' => true
+                        ]
+                    );
+                } else {
+                    WorkingHour::where('user_id', $user->id)
+                        ->where('day', $day)
+                        ->update(['is_active' => false]);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Working hours updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update working hours'
             ], 500);
         }
     }

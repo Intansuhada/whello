@@ -47,11 +47,13 @@
 
                         <!-- User profiles -->
                         @foreach ($users as $user)
-                            <div class="user-profile" data-user-id="{{ $user->id }}">
-                                <img src="{{ $user->profile !== null && $user->profile->avatar != null ? url('images/avatars/' . $user->profile->avatar) : asset('images/change-photo.svg') }}" alt="Avatar" class="profile-img">
+                            <div class="user-profile" data-user-id="{{ $user->id }}" data-email="{{ $user->email }}">
+                                <img src="{{ $user->profile && $user->profile->avatar ? Storage::url($user->profile->avatar) : asset('images/change-photo.svg') }}" 
+                                     alt="Avatar" 
+                                     class="profile-img">
                                 <div class="profile-info">
-                                    <p class="profile-name">{{ $user->profile ? $user->profile->nickname : $user->email }}</p>
-                                    <p class="profile-position">{{ $user->profile ? ($user->profile->jobTitle ? $user->profile->jobTitle->name : 'No Position') : 'No Position' }}</p>
+                                    <p class="profile-name">{{ $user->profile ? $user->profile->name : $user->email }}</p>
+                                    <p class="profile-position">{{ $user->profile?->jobTitle?->name ?? 'No Position' }}</p>
                                 </div>
                             </div>
                         @endforeach
@@ -70,16 +72,15 @@
                     </div>
                     <div class="user-overview">
                         <div class="user-detail" id="userDetailSection" style="display: none">
-                            <img src="{{ asset('images/change-photo.svg') }}" 
-                                 alt="Avatar" 
-                                 class="detail-avatar" 
-                                 id="detail-avatar">
                             <div class="detail-info">
                                 <div class="detail-header">
+                                    <div class="user-detail-avatar">
+                                        <img src="" alt="Profile Photo" id="detail-avatar">
+                                    </div>
                                     <div class="detail-text">
                                         <span class="detail-name" id="detail-name"></span>
                                         <div class="detail-row">
-                                            <span class="detail-id" id="detail-id">ID:</span>
+                                            <span class="detail-email" id="detail-id">Email:</span>
                                         </div>
                                     </div>
                                     <div class="detail-buttons">
@@ -281,15 +282,9 @@
     margin-bottom: 20px;
 }
 
-.detail-avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
 .detail-info {
     flex: 1;
+    margin-left: 0; /* Remove left margin since there's no avatar */
 }
 
 .detail-name {
@@ -378,6 +373,24 @@
 .users-rmv-btn:hover {
     background: #FEB2B2;
 }
+
+.user-detail-avatar {
+    width: 64px;
+    height: 64px;
+    margin-right: 16px;
+}
+
+.user-detail-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.detail-header {
+    display: flex;
+    align-items: center;
+}
 </style>
 
 @push('scripts')
@@ -439,6 +452,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const invitePopup = document.getElementById('invitePopup');
     const popupCloseBtn = document.getElementById('popup-close-btn');
     const inviteForm = document.getElementById('inviteForm');
+    const userProfiles = document.querySelectorAll('.user-profile');
+    const userDetailSection = document.getElementById('userDetailSection');
+    const tabMenuSection = document.getElementById('tabMenuSection');
+    const tabContentSection = document.getElementById('tabContentSection');
+    const noUserSelected = document.getElementById('noUserSelected');
 
     // Show popup
     if (inviteBtn && invitePopup) {
@@ -506,6 +524,78 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitBtn.textContent = 'Send';
             }
         });
+    }
+
+    // Handle user profile click
+    userProfiles.forEach(profile => {
+        profile.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            const userName = this.querySelector('.profile-name').textContent;
+            const userEmail = this.getAttribute('data-email');
+            const userAvatar = this.querySelector('img').src;
+
+            // Update user detail section with email and avatar
+            document.getElementById('detail-name').textContent = userName;
+            document.getElementById('detail-id').textContent = `Email: ${userEmail}`;
+            document.getElementById('detail-avatar').src = userAvatar;
+
+            // Show user detail and tabs
+            userDetailSection.style.display = 'flex';
+            tabMenuSection.style.display = 'block';
+            tabContentSection.style.display = 'block';
+            noUserSelected.style.display = 'none';
+
+            // Set active class on selected profile
+            userProfiles.forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // Tab handling
+    const tablinks = document.querySelectorAll('.tablink');
+    
+    tablinks.forEach(tablink => {
+        tablink.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all tabs
+            tablinks.forEach(tab => tab.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            // Hide all tab content
+            document.querySelectorAll('.tab-detail').forEach(content => {
+                content.classList.remove('active');
+                content.style.display = 'none';
+            });
+            
+            // Show selected tab content
+            const targetId = this.getAttribute('data-target');
+            const targetContent = document.querySelector(targetId);
+            if (targetContent) {
+                targetContent.classList.add('active');
+                targetContent.style.display = 'block';
+                
+                // Load content if needed
+                loadTabContent(targetId.substring(1), this.href);
+            }
+        });
+    });
+
+    // Function to load tab content
+    async function loadTabContent(tabName, url) {
+        const contentDiv = document.querySelector(`#${tabName}`);
+        if (!contentDiv) return;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.text();
+            contentDiv.innerHTML = data;
+        } catch (error) {
+            console.error('Error loading tab content:', error);
+            contentDiv.innerHTML = '<div class="error">Failed to load content</div>';
+        }
     }
 });
 </script>

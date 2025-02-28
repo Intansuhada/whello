@@ -31,4 +31,9 @@ class SettingsController extends Controller implements HasMiddleware
             'user' => $user
         ]);
     }
+
+    public function system()
+    {
+        return view('settings.system');
+    }
 }

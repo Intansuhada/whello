@@ -18,9 +18,11 @@
         <div class="navbar-right">
             <div class="sidebar-user-icon">
                 <div class="sidebar-profile-name">
-                    <img src="{{ auth()->user()->profile && auth()->user()->profile->avatar ? url('images/avatars/' . auth()->user()->profile->avatar) : asset('images/change-photo.svg') }}" alt="Avatar" class="sidebar-profile-img">
+                    <img src="{{ auth()->user()->profile && auth()->user()->profile->avatar ? Storage::url(auth()->user()->profile->avatar) : asset('images/change-photo.svg') }}" 
+                         alt="Avatar" 
+                         class="sidebar-profile-img">
                     <span>{{ Auth::user()->profile ? Auth::user()->profile->name : Auth::user()->email }}</span>
-                    <img src="{{ asset('images/arrow-down.svg') }}" alt="Avatar" class="sidebar-profile-arrow">
+                    <img src="{{ asset('images/arrow-down.svg') }}" alt="" class="sidebar-profile-arrow">
                 </div>
             </div>
         </div>
