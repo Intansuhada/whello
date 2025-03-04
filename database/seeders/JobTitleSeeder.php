@@ -4,40 +4,24 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\JobTitle;
-use App\Models\Department;
 
 class JobTitleSeeder extends Seeder
 {
     public function run()
     {
-        $departments = [
-            'Engineering' => [
-                'Frontend Developer',
-                'Backend Developer',
-                'Full Stack Developer',
-                'DevOps Engineer'
-            ],
-            'Design' => [
-                'UI Designer',
-                'UX Designer',
-                'Graphic Designer'
-            ],
-            'Marketing' => [
-                'Marketing Manager',
-                'Content Writer',
-                'SEO Specialist'
-            ]
+        $jobTitles = [
+            'Software Engineer',
+            'Product Manager',
+            'Marketing Manager',
+            'Sales Representative',
+            'HR Manager',
+            'Financial Analyst',
+            'Operations Manager',
+            'Customer Support Representative'
         ];
 
-        foreach ($departments as $deptName => $titles) {
-            $department = Department::firstOrCreate(['name' => $deptName]);
-            
-            foreach ($titles as $title) {
-                JobTitle::firstOrCreate([
-                    'name' => $title,
-                    'department_id' => $department->id
-                ]);
-            }
+        foreach ($jobTitles as $title) {
+            JobTitle::create(['name' => $title]);
         }
     }
 }

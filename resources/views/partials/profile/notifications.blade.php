@@ -18,19 +18,19 @@
             <div class="profile-menu-wrapper">
                 <ul class="profile-menu">
                     <li class="profile-items">
-                        <a href="{{ route('profile.basic') }}" class="profile-link {{ Request::routeIs('profile.basic') ? 'active' : '' }}">
+                        <a href="#" class="profile-link" data-target="#my-profile">
                             <img src="{{ asset('images/profile-circle.svg') }}" alt="" class="icon">
                             <span>Basic Profile</span>
                         </a>
                     </li>
                     <li class="profile-items">
-                        <a href="{{ route('profile.account-security') }}" class="profile-link {{ Request::routeIs('profile.account-security') ? 'active' : '' }}">
+                        <a href="#" class="profile-link" data-target="#account-security">
                             <img src="{{ asset('images/shield-slash.svg') }}" alt="" class="icon">
                             <span>Account & Security</span>
                         </a>
                     </li>
                     <li class="profile-items">
-                        <a href="{{ route('profile.notifications') }}" class="profile-link {{ Request::routeIs('profile.notifications') ? 'active' : '' }}">
+                        <a href="#" class="profile-link" data-target="#notifications">
                             <img src="{{ asset('images/notification-bing.svg') }}" alt="" class="icon">
                             <span>Notifications</span>
                         </a>
@@ -49,7 +49,9 @@
                     {{ session('error') }}
                 </div>
                 @endif
-                @yield('profile-content')
+                @include('partials.profile.my-profile')
+                @include('partials.profile.account-security')
+                @include('partials.profile.notifications-wrapper')
             </div>
         </div>
     </div>

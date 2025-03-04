@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
+    use Notifiable;
+
     /**
      * The "booted" method of the model.
      *
@@ -35,6 +39,8 @@ class User extends Authenticatable
         'role_id',
         'password',
         'avatar_url',  // Pastikan field ini ada
+        'activation_token',
+        'email_verified_at',
     ];
 
     /**
@@ -56,6 +62,7 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'email_verified_at' => 'datetime',
         ];
     }
 
@@ -65,6 +72,16 @@ class User extends Authenticatable
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);
+    }
+
+    public function getDepartmentAttribute()
+    {
+        return $this->profile?->department;
+    }
+
+    public function getJobTitleAttribute()
+    {
+        return $this->profile?->jobTitle;
     }
 
     /**

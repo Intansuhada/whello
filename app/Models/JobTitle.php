@@ -3,18 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JobTitle extends Model
 {
-    protected $fillable = ['name', 'department_id'];
+    protected $table = 'job_titles'; 
+    protected $fillable = ['job_titles'];
 
-    public function department()
+    public function userProfiles(): HasMany
     {
-        return $this->belongsTo(Department::class);
+        return $this->hasMany(UserProfile::class);
     }
 
-    public function profiles()
+    public function department(): BelongsTo
     {
-        return $this->hasMany(Profile::class);
+        return $this->belongsTo(Department::class);
     }
 }

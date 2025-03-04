@@ -93,15 +93,53 @@ Route::middleware(['auth'])->group(function () {
         
         // Hapus route yang duplikat, gunakan hanya satu route untuk invite
         Route::post('/users/invite', [UserController::class, 'invite'])->name('users.invite');
-        
-        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-        Route::get('/users/{user}/edit', 'UserController@edit')->name('users.edit');
-        Route::delete('/users/{user}', 'UserController@destroy')->name('users.destroy');    });
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+ 
+    });
 
     // Profile routes
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/settings/profile/update', [ProfileController::class, 'update'])
          ->name('settings.profile.update');
+    Route::get('/profile/basic', [ProfileController::class, 'basic'])->name('profile.basic');
+    Route::get('/profile/security', [ProfileController::class, 'security'])->name('profile.security');
+    Route::get('/profile/notifications', [ProfileController::class, 'notifications'])->name('profile.notifications');
+    Route::get('/profile/account', [ProfileController::class, 'account'])->name('profile.account');
+    Route::get('/profile/security', [ProfileController::class, 'security'])->name('profile.security');
+    Route::get('/profile/account-security', [ProfileController::class, 'accountSecurity'])->name('profile.account-security');
+    
+    // Profile routes
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::post('/notifications/update', [ProfileController::class, 'updateNotifications'])->name('notifications.update');
+    });
+
+    Route::put('/users/{user}/edit', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}/remove', [UserController::class, 'destroy'])->name('users.destroy');
+
+    Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+
+    Route::get('/profile/my-profile', [ProfileController::class, 'myProfile'])->name('profile.my-profile');
+    Route::post('/profile/update-profile', [ProfileController::class, 'updateProfile'])->name('profile.update-profile');
+    Route::delete('/profile/delete-photo', [ProfileController::class, 'deletePhoto'])->name('profile.delete-photo');
 });
 
 Route::get('/settings/system', [App\Http\Controllers\SettingsController::class, 'system'])->name('settings.system');
+
+Route::middleware(['auth'])->group(function () {
+    Route::prefix('users')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('users.index');
+        Route::get('/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/{id}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+    });
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/profile/basic', [ProfileController::class, 'basic'])->name('profile.basic');
+    Route::put('/profile/basic', [ProfileController::class, 'updateBasic'])->name('profile.update-basic');
+    Route::post('/profile/security/update', [ProfileController::class, 'updateSecurity'])
+        ->name('profile.security.update')
+        ->middleware('auth');
+});

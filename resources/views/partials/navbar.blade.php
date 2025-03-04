@@ -1,9 +1,13 @@
 <header>
-    <nav class="navbar">
+    <nav class="navbar" id="navbar">
         <div class="navbar-left">
             <div class="sidebar-logo">
                 <img src="{{ asset('images/whello-logo.svg') }}" alt="Whello Logo">
             </div>
+            <div class="sidebar-toggle">
+                <img src="{{ asset('images/burger.svg') }}" alt="Toggle Sidebar" class="toggle-icon" style="width: 16px; height: 16px;">
+            </div>
+            
             <div class="sidebar-divider-nav"></div>
         </div>
         <div class="navbar-center">
@@ -27,4 +31,14 @@
             </div>
         </div>
     </nav>
+<script> 
+        document.addEventListener("DOMContentLoaded", function () {
+        const toggleButton = document.getElementById("sidebar-toggle");
+        const sidebar = document.querySelector(".sidebar"); // Pastikan class sidebar benar
+        
+        toggleButton.addEventListener("click", function () {
+            sidebar.classList.toggle("sidebar-collapsed");
+        });
+    });
+    </script>    
 </header>

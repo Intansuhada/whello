@@ -1,360 +1,353 @@
-<!-- Add this at the top of the file -->
 <div class="alert-container"></div>
 
-<!-- Basic Profile Section -->
-<div class="profile-form-section" id="my-profile">
-    <form id="profile-form" action="{{ route('settings.profile.update') }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        @method('PUT')
+<div class="account-security-settings-content">
+    <div id="alertContainer" class="mb-4" style="display: none;">
+        <div class="alert alert-dismissible fade show" role="alert">
+            <span id="alertMessage"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
 
-        <!-- Photo Profile -->
-        <div class="form-group">
-            <h3>Photo Profile</h3>
-            <p class="description">Please upload your photo with a maximum size of 2048 KB!</p>
-            <div class="avatar-upload">
-                <div class="avatar-preview">
-                    <img src="{{ auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : asset('assets/img/default-avatar.png') }}" 
-                         alt="Profile Photo" 
-                         id="avatarPreview">
+    <form id="profileForm" action="{{ route('profile.update-profile') }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        <div class="settings-group">
+            <h2 class="settings-title">Profile Settings</h2>
+            
+            <div class="settings-card">
+                <!-- Avatar Section -->
+                <div class="settings-item">
+                    <div class="settings-header">
+                        <h3>Profile Photo</h3>
+                        <p class="text-muted">Upload a new profile picture</p>
+                    </div>
+                    <div class="settings-input">
+                        <div class="profile-photo-container">
+                            <div class="profile-photo-wrapper">
+                                <img src="{{ $user->profile?->avatar ? Storage::url($user->profile->avatar) : asset('images/default-avatar.png') }}" 
+                                     alt="Profile Photo" 
+                                     id="avatarPreview"
+                                     class="profile-photo">
+                            </div>
+                            <div class="photo-actions">
+                                <input type="file" id="avatarInput" name="avatar" class="hidden" accept="image/*">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('avatarInput').click()">
+                                    Upload 
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger" id="deletePhotoBtn" 
+                                        {{ !$user->profile?->avatar ? 'disabled' : '' }}>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="avatar-actions">
-                    <label for="avatarInput" class="btn-change-photo">Change Photo</label>
-                    <input type="file" 
-                           id="avatarInput" 
-                           name="avatar" 
-                           accept="image/jpeg,image/png,image/jpg" 
-                           class="hidden">
-                    @error('avatar')
-                        <p class="error-text">{{ $message }}</p>
-                    @enderror
+
+                <!-- Nickname -->
+                <div class="settings-item">
+                    <div class="settings-header">
+                        <h3>Nickname</h3>
+                        <p class="text-muted">How you want to be called</p>
+                    </div>
+                    <div class="settings-input">
+                        <input type="text" class="form-control" name="nickname" 
+                               value="{{ $user->profile?->nickname }}" required>
+                    </div>
+                </div>
+
+                <!-- Full Name -->
+                <div class="settings-item">
+                    <div class="settings-header">
+                        <h3>Full Name</h3>
+                        <p class="text-muted">Your full name</p>
+                    </div>
+                    <div class="settings-input">
+                        <input type="text" class="form-control" name="name" 
+                               value="{{ $user->profile?->name }}" required>
+                    </div>
+                </div>
+
+                <!-- Department -->
+                <div class="settings-item">
+                    <div class="settings-header">
+                        <h3>Department</h3>
+                        <p class="text-muted">Your department in the organization</p>
+                    </div>
+                    <div class="settings-input">
+                        @if($user->profile?->department)
+                            <input type="text" class="form-control" value="{{ $user->profile->department->name }}" readonly>
+                            <input type="hidden" name="department_id" value="{{ $user->profile->department_id }}">
+                        @else
+                            <input type="text" class="form-control" value="Not assigned" readonly>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Job Title -->
+                <div class="settings-item">
+                    <div class="settings-header">
+                        <h3>Job Title</h3>
+                        <p class="text-muted">Your role in the organization</p>
+                    </div>
+                    <div class="settings-input">
+                        @if($user->profile?->jobTitle)
+                            <input type="text" class="form-control" value="{{ $user->profile->jobTitle->name }}" readonly>
+                            <input type="hidden" name="job_title_id" value="{{ $user->profile->job_title_id }}">
+                        @else
+                            <input type="text" class="form-control" value="Not assigned" readonly>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- About -->
+                <div class="settings-item">
+                    <div class="settings-header">
+                        <h3>About</h3>
+                        <p class="text-muted">Tell us about yourself</p>
+                    </div>
+                    <div class="settings-input">
+                        <textarea class="form-control" name="about" rows="4">{{ $user->profile?->about }}</textarea>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Basic Information -->
-        <div class="form-group">
-            <h3>Basic Information</h3>
-            <label for="nickname">Nickname</label>
-            <input type="text" id="nickname" name="nickname" value="{{ auth()->user()->profile->nickname ?? '' }}">
-            <p class="help-text">Nickname is used for identifying users in this platform.</p>
-        </div>
-
-        <div class="form-group">
-            <label for="full_name">Full Name</label>
-            <input type="text" id="full_name" name="name" value="{{ auth()->user()->profile->name ?? '' }}">
-            <p class="help-text">Full Name is used for identifying users in this platform.</p>
-        </div>
-
-        <div class="form-group">
-            <label for="about">About Me</label>
-            <textarea id="about" name="about" rows="4">{{ auth()->user()->profile->about ?? '' }}</textarea>
-            <p class="help-text">Tell us something about yourself.</p>
-        </div>
-
-        <div class="form-group">
-            <label for="department">Department</label>
-            <select id="department" name="department_id">
-                <option value="">Select Department</option>
-                @foreach($departments ?? [] as $dept)
-                    <option value="{{ $dept->id }}" {{ (auth()->user()->profile->department_id ?? '') == $dept->id ? 'selected' : '' }}>
-                        {{ $dept->name }}
-                    </option>
-                @endforeach
-            </select>
-            <p class="help-text">Department is a department that is associated with your job title.</p>
-        </div>
-
-        <div class="form-group">
-            <label for="job_title">Job Title</label>
-            <select id="job_title" name="job_title_id">
-                <option value="">Select Job Title</option>
-                @foreach($jobTitles ?? [] as $title)
-                    <option value="{{ $title->id }}" {{ (auth()->user()->profile->job_title_id ?? '') == $title->id ? 'selected' : '' }}>
-                        {{ $title->name }}
-                    </option>
-                @endforeach
-            </select>
-            <p class="help-text">Job title is a title that describes your job.</p>
-        </div>
-
-        <!-- Working Hours -->
-        <div class="form-group working-hours">
-            <h3>Default Working Days & Hours</h3>
-            <p class="description">This is the default working days and hours that will be used for all tasks, projects, and holidays...</p>
-            
-            @foreach(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $day)
-                <div class="day-row">
-                    <label>{{ $day }}</label>
-                    <div class="time-slots">
-                        <input type="time" name="hours[{{ strtolower($day) }}][am_start]">
-                        <span>to</span>
-                        <input type="time" name="hours[{{ strtolower($day) }}][am_end]">
-                        <span>&</span>
-                        <input type="time" name="hours[{{ strtolower($day) }}][pm_start]">
-                        <span>to</span>
-                        <input type="time" name="hours[{{ strtolower($day) }}][pm_end]">
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        <!-- Submit Button -->
-        <div class="form-actions">
-            <button type="submit" class="btn-save">Save All Changes</button>
+        <div class="settings-actions">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
         </div>
     </form>
 </div>
 
-<!-- Account & Security Section -->
-<div class="profile-form-section" id="account-security">
-    <div class="account-security">
-        <div class="account-security-info">
-            <div class="form-group">
-                <h3>Account & Security Settings</h3>
-            </div>
-
-            <!-- Phone Number -->
-            <div class="form-group">
-                <p><strong>Phone Number</strong></p>
-                <p class="help-text">This is phone number</p>
-                <input type="text" name="phone" value="+6282288126962">
-            </div>
-
-            <!-- Username -->
-            <div class="form-group">
-                <p><strong>Username</strong></p>
-                <p class="help-text">Username can be used for login.</p>
-                <form action="{{ route('settings.profile.change-username') }}" id="form-change-username" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <input type="text" name="username" value="{{ $user->username }}">
-                </form>
-                <span><a href="#" id="change-username">Change Username</a></span>
-            </div>
-
-            <!-- Email -->
-            <div class="form-group">
-                <p><strong>Email</strong></p>
-                <p class="help-text">You can still log in with your current email address or your new one.</p>
-                <form action="{{ route('settings.profile.verify-new-email') }}" id="form-change-email" method="post">
-                    @csrf
-                    <input type="email" name="email" value="{{ $user->email }}">
-                </form>
-                <span><a href="#" id="change-email">Change Email</a></span>
-            </div>
-
-            <!-- Password -->
-            <div class="form-group">
-                <p><strong>Password</strong></p>
-                <p class="help-text">You can change your password here.</p>
-                <div class="input-box">
-                    <form action="{{ route('settings.profile.change-password') }}" id="form-change-password" method="POST">
-                        @method('PUT')
-                        @csrf
-                        <input type="password" name="password" id="password" placeholder="Password">
-                        <input type="password" name="password_confirmation" placeholder="Confirm Password">
-                    </form>
-                    <img src="{{ asset('images/eye-slash.svg') }}" id="eyeicon">
-                    <div class="change">
-                        <span><a href="#" id="change-password">Change Password</a></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Two Factor Authentication -->
-            <div class="form-group">
-                <p><strong>Two Factor Authentication</strong></p>
-                <p class="help-text">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
-                <div class="toggle">
-                    <input class="input-toggle" type="checkbox" id="account-security">
-                    <label for="account-security" class="button-toggle"></label>
-                    <p>Activate Two Factor Authentication</p>
-                </div>
-            </div>
-
-            <!-- Leave Workspace -->
-            <div class="leave">
-                <div class="button-leave">
-                    <button>
-                        <a href="">
-                            <img src="{{ asset('images/export.svg') }}" alt="" class="icon">
-                            <span>Leave From Workspace</span>
-                        </a>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <style>
-.profile-form-section {
+/* Use the same styles as account-security-settings.blade.php */
+.account-security-settings-content {
     padding: 24px;
+}
+
+.settings-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 24px;
+}
+
+.settings-card {
     background: white;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
 }
 
-.form-group {
-    margin-bottom: 24px;
+.settings-item {
+    padding: 24px;
+    border-bottom: 1px solid #e2e8f0;
 }
 
-.avatar-upload {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    margin-bottom: 24px;
+.settings-item:last-child {
+    border-bottom: none;
 }
 
-.hidden {
-    display: none;
+.settings-header {
+    margin-bottom: 16px;
 }
 
-.btn-change,
-.btn-add-phone,
-.btn-2fa,
-.btn-save {
-    padding: 8px 16px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-}
-
-.btn-save {
-    width: 100%;
-    background: #3182CE;
-    color: white;
-    padding: 12px;
+.settings-header h3 {
     font-size: 16px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 4px;
 }
 
-.working-hours .day-row {
+.settings-header p {
+    font-size: 14px;
+    color: #718096;
+    margin: 0;
+}
+
+.settings-input {
     display: flex;
-    gap: 16px;
-    margin-bottom: 12px;
-    align-items: center;
+    gap: 12px;
+    align-items: flex-start;
 }
 
-.time-slots {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.add-phone {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-}
-
-/* Additional styles for form inputs */
-input[type="text"],
-input[type="time"],
-select,
-textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #E2E8F0;
-    border-radius: 4px;
+.form-control {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
 }
 
 .help-text {
+    font-size: 12px;
     color: #718096;
-    font-size: 14px;
     margin-top: 4px;
 }
 
-/* Additional styles for account security */
-.account-security {
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #4299e1;
+    color: white;
+    border: none;
+}
+
+.btn-secondary {
+    background-color: #edf2f7;
+    color: #2d3748;
+    border: 1px solid #e2e8f0;
+}
+
+.settings-actions {
     margin-top: 24px;
 }
 
-.input-box {
-    position: relative;
+@media (max-width: 640px) {
+    .settings-input {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
 }
 
-.toggle {
+.profile-photo-container {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 12px;
-    margin-top: 16px;
 }
 
-.button-leave {
-    margin-top: 24px;
-}
-
-.button-leave button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border: 1px solid #E53E3E;
-    border-radius: 4px;
-    background: transparent;
-    color: #E53E3E;
-    cursor: pointer;
-}
-
-.error-text {
-    color: #E53E3E;
-    font-size: 14px;
-    margin-top: 4px;
-}
-
-.avatar-preview img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
+.profile-photo-wrapper {
+    width: 96px;  /* Increased size */
+    height: 96px; /* Increased size */
     border-radius: 50%;
-}
-
-.btn-change-photo {
-    background: #3182CE;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.alert-container {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    width: auto;
-    min-width: 300px;
-    max-width: 80%;
-}
-
-.alert {
-    text-align: center;
-    padding: 16px 24px;
-    border-radius: 8px;
-    margin-bottom: 10px;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+    background: #f7fafc;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    animation: slideDown 0.3s ease-out;
+    box-shadow: 0 0 0 2px rgba(226, 232, 240, 0.5);
+}
+
+.photo-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* Update button styles for smaller buttons */
+.photo-actions .btn {
+    min-width: 80px;
+}
+
+.profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.form-control {
+    width: 100%;
+    transition: all 0.2s;
+    background-color: white;
+}
+
+.form-control:focus {
+    border-color: #4299e1;
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+}
+
+.form-control[readonly] {
+    background-color: #f7fafc;
+    cursor: not-allowed;
+    color: #4a5568;
+    border-color: #e2e8f0;
+}
+
+.form-control[readonly]:focus {
+    border-color: #e2e8f0;
+    box-shadow: none;
+}
+
+.readonly-field {
+    background-color: #f7fafc;
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+}
+
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+select.form-control:focus {
+    border-color: #4299e1;
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+}
+
+/* Enhanced Alert Styles */
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    position: relative;
+    margin-bottom: 1rem;
+    border-left: 4px solid;
+    animation: slideIn 0.3s ease-in-out;
 }
 
 .alert-success {
-    background-color: #C6F6D5;
-    border: 1px solid #68D391;
-    color: #2F855A;
+    background-color: #f0fdf4;
+    border-color: #22c55e;
+    color: #15803d;
+    box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
 }
 
-.alert-error {
-    background-color: #FED7D7;
-    border: 1px solid #FC8181;
-    color: #C53030;
+.alert-danger {
+    background-color: #fef2f2;
+    border-color: #ef4444;
+    color: #b91c1c;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
 }
 
-@keyframes slideDown {
+.btn-close {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    padding: 0.5rem;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+@keyframes slideIn {
     from {
         transform: translateY(-100%);
         opacity: 0;
@@ -364,55 +357,150 @@ textarea {
         opacity: 1;
     }
 }
+
+@keyframes slideOut {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+}
+
+#alertContainer {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    min-width: 300px;
+    max-width: 500px;
+}
+
+.alert-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.5rem;
+}
+
+.alert-content {
+    display: flex;
+    align-items: center;
+}
+
+/* Success Icon */
+.alert-success .alert-icon::before {
+    content: '✓';
+    background-color: #22c55e;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    margin-right: 8px;
+}
+
+/* Error Icon */
+.alert-danger .alert-icon::before {
+    content: '!';
+    background-color: #ef4444;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.btn-danger {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.btn-danger:hover {
+    background-color: #fecaca;
+}
+
+.btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.upload-btn-wrapper {
+    display: flex;
+    gap: 8px;
+}
+
+.hidden {
+    display: none;
+    visibility: hidden;
+    position: absolute;
+    left: -9999px;
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const profileForm = document.getElementById('profile-form');
+    const form = document.getElementById('profileForm');
+    const alertContainer = document.getElementById('alertContainer');
+    const alertElement = alertContainer.querySelector('.alert');
+    const alertMessage = document.getElementById('alertMessage');
     const avatarInput = document.getElementById('avatarInput');
     const avatarPreview = document.getElementById('avatarPreview');
+    const deletePhotoBtn = document.getElementById('deletePhotoBtn');
+
+    function showAlert(message, type = 'success') {
+        alertMessage.innerHTML = `
+            <div class="alert-content">
+                <span class="alert-icon"></span>
+                ${message}
+            </div>
+        `;
+        alertElement.classList.remove('alert-success', 'alert-danger');
+        alertElement.classList.add(`alert-${type}`);
+        alertContainer.style.display = 'block';
+        
+        // Auto hide after 3 seconds with animation
+        setTimeout(() => {
+            alertElement.style.animation = 'slideOut 0.3s ease-in forwards';
+            setTimeout(() => {
+                alertContainer.style.display = 'none';
+                alertElement.style.animation = '';
+            }, 300);
+        }, 3000);
+    }
 
     // Handle avatar preview
     avatarInput.addEventListener('change', function(e) {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            
-            // Validate file size (2MB = 2048KB)
-            if (file.size > 2048 * 1024) {
-                showAlert('File size must be less than 2MB', 'error');
-                this.value = '';
-                return;
-            }
-
-            // Validate file type
-            if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
-                showAlert('Please upload only jpeg, jpg or png files', 'error');
-                this.value = '';
-                return;
-            }
-
+        if (this.files && this.files[0]) {
             const reader = new FileReader();
+            
             reader.onload = function(e) {
                 avatarPreview.src = e.target.result;
+                deletePhotoBtn.disabled = false;
             };
-            reader.readAsDataURL(file);
+            
+            reader.readAsDataURL(this.files[0]);
         }
     });
 
     // Handle form submission
-    profileForm.addEventListener('submit', async function(e) {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         try {
-            const formData = new FormData(this);
-            
-            const submitButton = this.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.textContent = 'Saving...';
-
             const response = await fetch(this.action, {
                 method: 'POST',
-                body: formData,
+                body: new FormData(this),
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
@@ -420,48 +508,46 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const result = await response.json();
-            
+
             if (result.success) {
-                showAlert('Profile updated successfully', 'success');
-                
-                // Update avatar if new URL is provided
+                showAlert(result.message, 'success');
                 if (result.data.avatar_url) {
                     avatarPreview.src = result.data.avatar_url;
                 }
-                
-                // Optional: reload the page after successful update
-                setTimeout(() => window.location.reload(), 1500);
             } else {
-                throw new Error(result.message || 'Failed to update profile');
+                showAlert(result.message, 'danger');
             }
         } catch (error) {
-            console.error('Error:', error);
-            showAlert(error.message || 'Failed to update profile', 'error');
-        } finally {
-            submitButton.disabled = false;
-            submitButton.textContent = 'Save All Changes';
+            showAlert('Gagal menyimpan perubahan', 'danger');
         }
     });
 
-    function showAlert(message, type) {
-        const alertContainer = document.querySelector('.alert-container');
-        const alert = document.createElement('div');
-        alert.className = `alert alert-${type}`;
-        alert.innerHTML = message;
-        
-        // Remove existing alerts
-        alertContainer.innerHTML = '';
-        alertContainer.appendChild(alert);
-        
-        // Remove alert after 3 seconds
-        setTimeout(() => {
-            alert.style.animation = 'slideOut 0.3s ease-in forwards';
-            setTimeout(() => {
-                if (alertContainer.contains(alert)) {
-                    alertContainer.removeChild(alert);
+    deletePhotoBtn.addEventListener('click', async function() {
+        if (!confirm('Are you sure you want to delete your profile photo?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('{{ route("profile.delete-photo") }}', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                    'Accept': 'application/json'
                 }
-            }, 300);
-        }, 3000);
-    }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                avatarPreview.src = result.data.avatar_url;
+                showAlert(result.message, 'success');
+                this.disabled = true;
+            } else {
+                showAlert(result.message, 'danger');
+            }
+        } catch (error) {
+            showAlert('Gagal menghapus foto profil', 'danger');
+        }
+    });
 });
 </script>

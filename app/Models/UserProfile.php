@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserProfile extends Model
 {
@@ -10,23 +11,27 @@ class UserProfile extends Model
 
     protected $fillable = [
         'user_id',
+        'nickname',
         'name',
-        'department_id',
+        'avatar',
         'job_title_id',
-        'avatar'
+        'department_id',
+        'about'
     ];
 
-    public function user()
+    protected $with = ['department', 'jobTitle'];
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function department()
+    public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
-    public function jobTitle()
+    public function jobTitle(): BelongsTo
     {
         return $this->belongsTo(JobTitle::class, 'job_title_id');
     }

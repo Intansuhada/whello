@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 use App\Models\User;
 use App\Mail\UserInvitationMail;
 use App\Models\InactivatedAccount;
+use App\Models\Department;
+use App\Models\JobTitle;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Validator;
@@ -152,6 +154,7 @@ class UserController extends Controller
     public function activateAccount(Request $request, $token): RedirectResponse
     {
         $request->validate([
+            'name' => 'required|string|max:255',
             'password' => ['required', Password::min(8)->letters()->numbers()->symbols(), 'confirmed'],
         ]);
 
@@ -165,6 +168,7 @@ class UserController extends Controller
 
             $user = User::create([
                 'email' => $credential->email,
+                'name' => $request->name,
                 'password' => Hash::make($request->password),
                 'role_id' => $roleId
             ]);
@@ -172,9 +176,9 @@ class UserController extends Controller
             DB::table('inactivated_user_accounts')->where('token', $token)->delete();
 
             return redirect()->route('auth.signin-page')
-                ->with('success', 'Account activated successfully. Please sign in.');
+                ->with('success', 'Akun berhasil diaktifkan. Silakan masuk.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to activate account.');
+            return back()->with('error', 'Gagal mengaktifkan akun.');
         }
     }
 
@@ -296,96 +300,97 @@ class UserController extends Controller
     }
 
     public function edit($id)
-    {
-        $user = User::with('profile')->findOrFail($id);
-        return view('users.edit', compact('user'));
-    }
+{
+    try {
+        // Load user with all necessary relationships
+        $selectedUser = User::with(['profile.department', 'profile.jobTitle'])->findOrFail($id);
+        $users = User::with(['profile.jobTitle', 'role'])->get();
+        $departments = Department::all();
+        $jobTitles = JobTitle::all();
 
-    public function update(Request $request, $id)
-    {
+        // Log for debugging
+        Log::info('Edit user data:', [
+            'user_id' => $selectedUser->id,
+            'profile' => $selectedUser->profile,
+            'department' => $selectedUser->profile?->department,
+            'job_title' => $selectedUser->profile?->jobTitle
+        ]);
+
+        return view('users', [
+            'users' => $users,
+            'selectedUser' => $selectedUser,
+            'showEditForm' => true,
+            'showUserDetail' => true,
+            'departments' => $departments,
+            'jobTitles' => $jobTitles,
+            'detailUser' => [
+                'id' => $selectedUser->id,
+                'name' => $selectedUser->profile?->name ?? $selectedUser->email,
+                'email' => $selectedUser->email,
+                'avatar' => $selectedUser->profile?->avatar ? 
+                    Storage::url($selectedUser->profile->avatar) : 
+                    asset('images/change-photo.svg')
+            ],
+            'currentUser' => $selectedUser
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error loading user edit form: ' . $e->getMessage());
+        return redirect()
+            ->back()
+            ->with('error', 'Failed to load user data. Please try again.');
+    }
+}
+
+public function update(Request $request, $id)
+{
+    try {
         $user = User::findOrFail($id);
-        
+
+        // Validate the request
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
-            'department_id' => 'nullable|exists:departments,id',
-            'job_title_id' => 'nullable|exists:job_titles,id',
-            'avatar' => 'nullable|image|max:2048'
+            'nickname' => 'required|string|max:255',
+            'department_id' => 'required|exists:departments,id',
+            'job_title_id' => 'required|exists:job_titles,id',
         ]);
 
-        try {
-            DB::beginTransaction();
+        // Update or create profile
+        $profile = $user->profile ?? $user->profile()->create([]);
+        $profile->update([
+            'name' => $validated['nickname'],
+            'department_id' => $validated['department_id'],
+            'job_title_id' => $validated['job_title_id'],
+        ]);
 
-            // Update user email if changed
-            $user->update([
-                'email' => $validated['email']
-            ]);
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'User profile has been updated successfully');
 
-            // Create or update profile
-            $profile = $user->profile ?? new \App\Models\UserProfile();
-            $profile->user_id = $user->id; // Pastikan user_id terisi
-            $profile->name = $validated['name'];
-            $profile->department_id = $validated['department_id'] ?? null;
-            $profile->job_title_id = $validated['job_title_id'] ?? null;
-
-            // Handle avatar upload jika ada
-            if ($request->hasFile('avatar')) {
-                // Hapus avatar lama jika ada
-                if ($profile->avatar) {
-                    Storage::delete('public/' . $profile->avatar);
-                }
-                $path = $request->file('avatar')->store('avatars', 'public');
-                $profile->avatar = $path;
-            }
-
-            // Simpan profile
-            if (!$user->profile) {
-                $user->profile()->save($profile);
-            } else {
-                $profile->save();
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Profile updated successfully',
-                'data' => [
-                    'user' => $user->load('profile'),
-                    'avatar_url' => $profile->avatar ? Storage::url($profile->avatar) : null
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to update profile: ' . $e->getMessage()
-            ], 500);
-        }
+    } catch (ValidationException $e) {
+        return redirect()
+            ->back()
+            ->withErrors($e->validator)
+            ->withInput()
+            ->with('error', 'Please check the form for errors');
+    } catch (\Exception $e) {
+        Log::error('User update error: ' . $e->getMessage());
+        return redirect()
+            ->back()
+            ->with('error', 'Failed to update user profile. Please try again.')
+            ->withInput();
     }
+}
 
-    public function destroy($id)
+    public function destroy(User $user)
     {
-        $user = User::findOrFail($id);
-        
-        // Delete avatar if exists
-        if ($user->profile && $user->profile->avatar) {
-            Storage::delete('public/' . $user->profile->avatar);
+        try {
+            $user->delete();
+            return redirect()->route('users.index')->with('success', 'User removed successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to remove user');
         }
-        
-        // Delete profile and user
-        if ($user->profile) {
-            $user->profile->delete();
-        }
-        $user->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User removed successfully'
-        ]);
     }
-
+    
     // Update getRoleId helper function if you have it
     private function getRoleId($roleName)
     {
