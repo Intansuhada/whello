@@ -107,10 +107,10 @@
                                             @method('PUT')
                                             
                                             <div class="form-group">
-                                                <label for="nickname">Nickname</label>
-                                                <input type="text" id="nickname" name="nickname" 
-                                                    value="{{ old('nickname', $selectedUser->profile->nickname ?? '') }}" required>
-                                                @error('nickname')
+                                                <label for="name">Name</label>
+                                                <input type="text" id="name" name="name" 
+                                                    value="{{ old('name', $selectedUser->profile->name ?? '') }}" required>
+                                                @error('name')
                                                     <span class="error">{{ $message }}</span>
                                                 @enderror
                                             </div>
@@ -152,11 +152,80 @@
                                                     <div class="select-arrow">▼</div>
                                                 </div>
                                             </div>
+                                            <div class="form-working-day">
+                                                <p><strong>Default Working Days & Hours </strong></p>
+                                                <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+                                            </div>
                                             
-
+                                            <div class="working-days-container">
+                                                <div class="working-days-header">
+                                                    <div class="header-day">Day</div>
+                                                    <div class="header-morning">Morning</div>
+                                                    <div class="header-afternoon">Afternoon</div>
+                                                </div>
+                                            
+                                                @php
+                                                    $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                                                @endphp
+                                            
+                                                @foreach($days as $day)
+                                                    @php
+                                                        // Get working hours for current day from the database
+                                                        $workingHour = $selectedUser->workingHours->where('day', $day)->first();
+                                                        $isActive = $workingHour ? $workingHour->is_active : false;
+                                                        $isWeekend = in_array($day, ['saturday', 'sunday']);
+                                                    @endphp
+                                                    
+                                                    <div class="working-day-row {{ $isWeekend ? 'weekend' : '' }}">
+                                                        <div class="day-selector">
+                                                            <input type="checkbox" 
+                                                                   id="{{ $day }}" 
+                                                                   name="working_days[{{ $day }}]" 
+                                                                   class="round-checkbox"
+                                                                   {{ $isWeekend ? 'disabled' : ($isActive ? 'checked' : '') }}>
+                                                            <label for="{{ $day }}">{{ ucfirst($day) }}</label>
+                                                        </div>
+                                                        
+                                                        <div class="day-hours">
+                                                            @if($isWeekend)
+                                                                <div class="off-day-message">Off Day</div>
+                                                            @else
+                                                                <div class="morning-hours">
+                                                                    <input type="time" 
+                                                                           name="morning_start[{{ $day }}]" 
+                                                                           class="time-input" 
+                                                                           value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_start)->format('H:i') : '08:00' }}">
+                                                                    <span>to</span>
+                                                                    <input type="time" 
+                                                                           name="morning_end[{{ $day }}]" 
+                                                                           class="time-input" 
+                                                                           value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_end)->format('H:i') : '12:00' }}">
+                                                                </div>
+                                                                <div class="afternoon-hours">
+                                                                    <input type="time" 
+                                                                           name="afternoon_start[{{ $day }}]" 
+                                                                           class="time-input" 
+                                                                           value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_start)->format('H:i') : '13:00' }}">
+                                                                    <span>to</span>
+                                                                    <input type="time" 
+                                                                           name="afternoon_end[{{ $day }}]" 
+                                                                           class="time-input" 
+                                                                           value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_end)->format('H:i') : '17:00' }}">
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                            
+                                            <!-- Add form action buttons -->
                                             <div class="form-actions">
-                                                <button type="submit" class="btn-update">Update Profile</button>
-                                                <a href="{{ route('users.index') }}" class="btn-cancel">Cancel</a>
+                                                <button type="submit" class="btn-update">
+                                                    Update Profile
+                                                </button>
+                                                <a href="{{ route('users.index') }}" class="btn-cancel">
+                                                    Cancel
+                                                </a>
                                             </div>
                                         </form>
                                     </div>
@@ -300,6 +369,108 @@
 @endsection
 
 <style>
+
+.working-days-container {
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+}
+
+.working-days-header {
+    display: flex;
+    background-color: #F7FAFC;
+    padding: 12px 16px;
+    border-bottom: 1px solid #E2E8F0;
+    font-weight: 600;
+    color: #2D3748;
+}
+
+.working-days-header > div {
+    flex: 1;
+}
+
+.header-day {
+    flex: 2;
+}
+
+.working-day-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.working-day-row:last-child {
+    border-bottom: none;
+}
+
+.day-selector {
+    display: flex;
+    align-items: center;
+    flex: 2;
+}
+
+.day-selector input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #CBD5E0;
+    margin-right: 10px;
+    outline: none;
+    cursor: pointer;
+}
+
+.day-selector input[type="radio"]:checked {
+    border-color: #4299E1;
+    background-color: #4299E1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.day-selector label {
+    cursor: pointer;
+    color: #2D3748;
+}
+
+.day-hours {
+    display: flex;
+    flex: 4;
+    gap: 20px;
+}
+
+.morning-hours, 
+.afternoon-hours {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.time-input {
+    width: 100px;
+    padding: 6px;
+    border: 1px solid #E2E8F0;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #2D3748;
+}
+
+.time-input:focus {
+    outline: none;
+    border-color: #4299E1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.day-hours span {
+    color: #718096;
+    margin: 0 5px;
+    white-space: nowrap;
+}
+
+.day-off {
+    color: #718096;
+    font-style: italic;
+}
 .invite-popup {
     display: none;
     position: fixed;
@@ -931,6 +1102,52 @@
         overflow-x: auto;
     }
 }
+
+/* Update the checkbox styling */
+.round-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #CBD5E0;
+    border-radius: 50%;
+    margin-right: 10px;
+    cursor: pointer;
+    position: relative;
+    vertical-align: middle;
+    transition: all 0.2s ease;
+}
+
+.round-checkbox:checked {
+    background-color: #4299E1;
+    border-color: #4299E1;
+}
+
+.round-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+.round-checkbox:hover {
+    border-color: #4299E1;
+}
+
+.round-checkbox:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+/* Keep your existing working days container styles */
+.working-days-container {
+    // ...existing styles...
+}
 </style>
 
 @push('scripts')
@@ -1186,7 +1403,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
 
 
 

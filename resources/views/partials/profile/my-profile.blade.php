@@ -45,8 +45,8 @@
                 <!-- Nickname -->
                 <div class="settings-item">
                     <div class="settings-header">
-                        <h3>Nickname</h3>
-                        <p class="text-muted">How you want to be called</p>
+                        <h3>Full Name</h3>
+                        <p class="text-muted">Your full name</p>
                     </div>
                     <div class="settings-input">
                         <input type="text" class="form-control" name="nickname" 
@@ -57,8 +57,8 @@
                 <!-- Full Name -->
                 <div class="settings-item">
                     <div class="settings-header">
-                        <h3>Full Name</h3>
-                        <p class="text-muted">Your full name</p>
+                        <h3>Nick Name</h3>
+                        <p class="text-muted">How you want to be called</p>
                     </div>
                     <div class="settings-input">
                         <input type="text" class="form-control" name="name" 

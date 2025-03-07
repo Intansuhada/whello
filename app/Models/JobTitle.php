@@ -3,18 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class JobTitle extends Model
 {
-    protected $table = 'job_titles'; 
-    protected $fillable = ['job_titles'];
+    use HasFactory;
 
-    public function userProfiles(): HasMany
-    {
-        return $this->hasMany(UserProfile::class);
-    }
+    protected $table = 'job_titles';
+    protected $primaryKey = 'id';
+    protected $fillable = [
+        'name',
+        'description',
+        'department_id'
+    ];
 
     public function department(): BelongsTo
     {

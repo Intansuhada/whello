@@ -9,6 +9,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileSettingsController;
 use App\Http\Controllers\UserTabController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SystemSettingsController;
+use App\Http\Controllers\JobTitleController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\WorkspaceSettingController;
 
 Route::name('auth.')->group(function() {
     Route::get('/', [AuthController::class, 'signinView'])->name('signin-page');
@@ -123,6 +127,15 @@ Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destro
     Route::get('/profile/my-profile', [ProfileController::class, 'myProfile'])->name('profile.my-profile');
     Route::post('/profile/update-profile', [ProfileController::class, 'updateProfile'])->name('profile.update-profile');
     Route::delete('/profile/delete-photo', [ProfileController::class, 'deletePhoto'])->name('profile.delete-photo');
+
+    // Job Titles Routes
+    Route::prefix('job-titles')->name('job-titles.')->group(function () {
+        Route::get('/', [JobTitleController::class, 'index'])->name('index');
+        Route::post('/', [JobTitleController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [JobTitleController::class, 'edit'])->name('edit');
+        Route::put('/{jobTitle}', [JobTitleController::class, 'update'])->name('update');
+        Route::delete('/{jobTitle}', [JobTitleController::class, 'destroy'])->name('destroy');
+    });
 });
 
 Route::get('/settings/system', [App\Http\Controllers\SettingsController::class, 'system'])->name('settings.system');
@@ -143,3 +156,40 @@ Route::middleware(['auth'])->group(function () {
         ->name('profile.security.update')
         ->middleware('auth');
 });
+
+Route::prefix('settings/system')->name('system.')->group(function () {
+    Route::get('/general-workspace', [SystemSettingsController::class, 'generalWorkspace'])->name('general-workspace');
+    Route::get('/working-day', [SystemSettingsController::class, 'workingDay'])->name('working-day');
+    Route::get('/project-utility', [SystemSettingsController::class, 'projectUtility'])->name('project-utility');
+    Route::get('/time-and-expenses', [SystemSettingsController::class, 'timeAndExpenses'])->name('time-expenses');
+
+    // Add POST routes for form submissions
+    Route::post('/working-day', [SystemSettingsController::class, 'updateWorkingDay'])->name('working-day.update');
+    Route::post('/project-utility', [SystemSettingsController::class, 'updateProjectUtility'])->name('project-utility.update');
+    Route::post('/time-and-expenses', [SystemSettingsController::class, 'updateTimeAndExpenses'])->name('time-expenses.update');
+    
+    Route::put('/general-workspace', [SystemSettingsController::class, 'updateGeneralWorkspace'])
+        ->name('general-workspace.update');
+    Route::delete('/general-workspace/delete-logo', [SystemSettingsController::class, 'deleteCompanyLogo'])
+        ->name('delete-company-logo');
+    
+    Route::put('/workspace-settings/update', [WorkspaceSettingController::class, 'update'])
+        ->name('workspace.update');
+});
+
+Route::get('/job-titles', [JobTitleController::class, 'index'])->name('job-titles.index');
+Route::get('/settings/system/partials/create', [JobTitleController::class, 'create'])->name('job-titles.create');
+Route::get('/settings/system/partials/edit/{jobTitle}', [JobTitleController::class, 'edit'])->name('job-titles.edit');
+Route::put('/job-titles/{jobTitle}', [JobTitleController::class, 'update'])->name('job-titles.update');
+Route::delete('/job-titles/{jobTitle}', [JobTitleController::class, 'destroy'])->name('job-titles.destroy');
+
+// Departments Routes
+Route::get('/settings/system/partials/createDepart', [DepartmentController::class, 'create'])->name('department.createDepart');
+Route::get('/settings/system/partials/editDepart/{department}', [DepartmentController::class, 'edit'])->name('department.editDepart');
+Route::put('/departments/{department}', [DepartmentController::class, 'update'])->name('department.updateDepart');
+Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
+
+Route::delete('/department/{department}', [DepartmentController::class, 'destroy'])->name('department.destroyDepart');
+
+Route::resource('departments', DepartmentController::class);
+

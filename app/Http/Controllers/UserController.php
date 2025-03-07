@@ -300,86 +300,111 @@ class UserController extends Controller
     }
 
     public function edit($id)
-{
-    try {
-        // Load user with all necessary relationships
-        $selectedUser = User::with(['profile.department', 'profile.jobTitle'])->findOrFail($id);
-        $users = User::with(['profile.jobTitle', 'role'])->get();
-        $departments = Department::all();
-        $jobTitles = JobTitle::all();
-
-        // Log for debugging
-        Log::info('Edit user data:', [
-            'user_id' => $selectedUser->id,
-            'profile' => $selectedUser->profile,
-            'department' => $selectedUser->profile?->department,
-            'job_title' => $selectedUser->profile?->jobTitle
-        ]);
-
-        return view('users', [
-            'users' => $users,
-            'selectedUser' => $selectedUser,
-            'showEditForm' => true,
-            'showUserDetail' => true,
-            'departments' => $departments,
-            'jobTitles' => $jobTitles,
-            'detailUser' => [
-                'id' => $selectedUser->id,
-                'name' => $selectedUser->profile?->name ?? $selectedUser->email,
-                'email' => $selectedUser->email,
-                'avatar' => $selectedUser->profile?->avatar ? 
-                    Storage::url($selectedUser->profile->avatar) : 
-                    asset('images/change-photo.svg')
-            ],
-            'currentUser' => $selectedUser
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('Error loading user edit form: ' . $e->getMessage());
-        return redirect()
-            ->back()
-            ->with('error', 'Failed to load user data. Please try again.');
+    {
+        try {
+            // Load user with all necessary relationships
+            $selectedUser = User::with(['profile.department', 'profile.jobTitle', 'workingHours'])->findOrFail($id);
+            $users = User::with(['profile.jobTitle', 'role'])->get();
+            $departments = Department::all();
+            $jobTitles = JobTitle::all();
+    
+            // Load working hours
+            $workingHours = $selectedUser->workingHours->keyBy('day');
+    
+            // Log for debugging
+            Log::info('Edit user data:', [
+                'user_id' => $selectedUser->id,
+                'profile' => $selectedUser->profile,
+                'department' => $selectedUser->profile?->department,
+                'job_title' => $selectedUser->profile?->jobTitle,
+                'working_hours' => $workingHours
+            ]);
+    
+            return view('users', [
+                'users' => $users,
+                'selectedUser' => $selectedUser,
+                'showEditForm' => true,
+                'showUserDetail' => true,
+                'departments' => $departments,
+                'jobTitles' => $jobTitles,
+                'workingHours' => $workingHours,
+                'detailUser' => [
+                    'id' => $selectedUser->id,
+                    'name' => $selectedUser->profile?->name ?? $selectedUser->email,
+                    'email' => $selectedUser->email,
+                    'avatar' => $selectedUser->profile?->avatar ? 
+                        Storage::url($selectedUser->profile->avatar) : 
+                        asset('images/change-photo.svg')
+                ],
+                'currentUser' => $selectedUser
+            ]);
+    
+        } catch (\Exception $e) {
+            Log::error('Error loading user edit form: ' . $e->getMessage());
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to load user data. Please try again.');
+        }
     }
-}
+    
+    public function update(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $user = User::findOrFail($id);
+            
+            // Validate basic info
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'department_id' => 'required|exists:departments,id',
+                'job_title_id' => 'required|exists:job_titles,id',
+            ]);
 
-public function update(Request $request, $id)
-{
-    try {
-        $user = User::findOrFail($id);
+            // Update profile
+            $profile = $user->profile ?? $user->profile()->create([]);
+            $profile->update([
+                'name' => $validated['name'],
+                'department_id' => $validated['department_id'],
+                'job_title_id' => $validated['job_title_id'],
+            ]);
 
-        // Validate the request
-        $validated = $request->validate([
-            'nickname' => 'required|string|max:255',
-            'department_id' => 'required|exists:departments,id',
-            'job_title_id' => 'required|exists:job_titles,id',
-        ]);
+            // Delete existing working hours
+            $user->workingHours()->delete();
 
-        // Update or create profile
-        $profile = $user->profile ?? $user->profile()->create([]);
-        $profile->update([
-            'name' => $validated['nickname'],
-            'department_id' => $validated['department_id'],
-            'job_title_id' => $validated['job_title_id'],
-        ]);
+            // Insert working hours for Monday to Friday only
+            $workDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+            foreach ($workDays as $day) {
+                $user->workingHours()->create([
+                    'day' => $day,
+                    'morning_start' => $request->input("morning_start.$day", '08:00'),
+                    'morning_end' => $request->input("morning_end.$day", '12:00'),
+                    'afternoon_start' => $request->input("afternoon_start.$day", '13:00'),
+                    'afternoon_end' => $request->input("afternoon_end.$day", '17:00'),
+                    'is_active' => 1,
+                    'type' => 'regular'
+                ]);
+            }
 
-        return redirect()
-            ->route('users.index')
-            ->with('success', 'User profile has been updated successfully');
+            DB::commit();
 
-    } catch (ValidationException $e) {
-        return redirect()
-            ->back()
-            ->withErrors($e->validator)
-            ->withInput()
-            ->with('error', 'Please check the form for errors');
-    } catch (\Exception $e) {
-        Log::error('User update error: ' . $e->getMessage());
-        return redirect()
-            ->back()
-            ->with('error', 'Failed to update user profile. Please try again.')
-            ->withInput();
+            // Return redirect with success message instead of JSON
+            return redirect()
+                ->route('users.index')
+                ->with('success', 'Profile has been updated successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Update error: ' . $e->getMessage());
+            
+            // Return redirect with error message
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to update profile. Please try again.')
+                ->withInput();
+        }
     }
-}
+    
 
     public function destroy(User $user)
     {

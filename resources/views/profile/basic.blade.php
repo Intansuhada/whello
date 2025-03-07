@@ -43,7 +43,7 @@
                             </div>
         
                             <div class="form-section">
-                                <label for="nickname">Nickname</label>
+                                <label for="nickname">Fullname</label>
                                 <input type="text" id="nickname" name="nickname" 
                                        value="{{ old('nickname', $user->profile?->name) }}" 
                                        placeholder="How you want to be called"
@@ -54,7 +54,7 @@
                             </div>
         
                             <div class="form-section">
-                                <label for="full_name">Full Name</label>
+                                <label for="full_name">Nick Name</label>
                                 <input type="text" id="full_name" name="full_name" 
                                        value="{{ old('full_name', $user->profile?->full_name) }}" 
                                        placeholder="Your full name"
