@@ -1,32 +1,64 @@
 <?php
+// Controller: app/Http/Controllers/WorkspaceController.php
 
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use App\Models\WorkspaceSetting;
+use Illuminate\Support\Facades\Storage;
+use App\Models\JobTitle;
+use App\Models\Department;
+
 
 class WorkspaceController extends Controller
 {
-    public function updateWorkspace(Request $request)
+    public function index()
     {
+        // Get the first workspace record or create a new instance if none exists
+        $workspace = WorkspaceSetting::first() ?? new WorkspaceSetting();
+        $jobTitles = JobTitle::all();
+        $departments = Department::all();
+        // Pass to view
+        return view('settings.system.general-workspace', compact('workspace', 'jobTitles', 'departments'));
+    }
+
+    public function update(Request $request)
+    {
+        // Validate the request data
         $request->validate([
             'workspace_name' => 'required|string|max:255',
-            'photo_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'description' => 'nullable|string',
-            'url_slug' => 'required|string|max:255|unique:workspace_settings,url_slug,' . auth()->id(),
-            'owner_email' => 'required|email',
-            'team_members' => 'nullable|integer|min:1',
-            'timezone' => 'nullable|string',
-            'time_format' => 'nullable|in:12,24',
-            'date_format' => 'nullable|date',
-            'default_language' => 'nullable|string',
-            'default_currency' => 'nullable|string',
-            'default_hourly_rate' => 'nullable|numeric|min:0',
+            'photo_profile'  => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'description'    => 'nullable|string',
+            'url_slug'       => 'nullable|string|max:255',
+            'owner_email'    => 'nullable|email',
+            'team_members'   => 'nullable|integer',
+            'timezone'       => 'nullable|string',
+            'time_format'    => 'nullable|string',
+            'date_format'    => 'nullable|string',
+            'language'       => 'nullable|string',
+            'currency'       => 'nullable|string',
+            'hourly_rate'    => 'nullable|numeric',
         ]);
 
-        $workspace = WorkspaceSetting::where('user_id', auth()->id())->firstOrNew();
-        
+        // Get the first workspace or create a new one
+        $workspace = WorkspaceSetting::first();
+        if (!$workspace) {
+            $workspace = new WorkspaceSetting();
+        }
+
+        // Handle photo upload if provided
+        if ($request->hasFile('photo_profile')) {
+            // Delete old photo if exists
+            if ($workspace->photo_profile) {
+                Storage::disk('public')->delete($workspace->photo_profile);
+            }
+            
+            // Store the new photo
+            $path = $request->file('photo_profile')->store('workspace_photos', 'public');
+            $workspace->photo_profile = $path;
+        }
+
+        // Update all fields
         $workspace->workspace_name = $request->workspace_name;
         $workspace->description = $request->description;
         $workspace->url_slug = $request->url_slug;
@@ -35,21 +67,31 @@ class WorkspaceController extends Controller
         $workspace->timezone = $request->timezone;
         $workspace->time_format = $request->time_format;
         $workspace->date_format = $request->date_format;
-        $workspace->default_language = $request->default_language;
-        $workspace->default_currency = $request->default_currency;
-        $workspace->default_hourly_rate = $request->default_hourly_rate;
-        $workspace->user_id = auth()->id();
-
-        if ($request->hasFile('photo_profile')) {
-            if ($workspace->photo_profile) {
-                Storage::delete($workspace->photo_profile);
-            }
-            $path = $request->file('photo_profile')->store('workspace_profiles', 'public');
-            $workspace->photo_profile = $path;
-        }
-
+        $workspace->language = $request->language;
+        $workspace->currency = $request->currency;
+        $workspace->hourly_rate = $request->hourly_rate;
+        
+        // Save the workspace
         $workspace->save();
 
-        return redirect()->route('settings.system')->with('success', 'Workspace updated successfully.');
+        return redirect()->route('workspace.index')->with('success', 'Workspace settings updated successfully!');
+    }
+
+    public function deletePhoto()
+    {
+        $workspace = WorkspaceSetting::first();
+        
+        if ($workspace && $workspace->photo_profile) {
+            // Delete the file from storage
+            Storage::disk('public')->delete($workspace->photo_profile);
+            
+            // Remove the reference from the database
+            $workspace->photo_profile = null;
+            $workspace->save();
+            
+            return redirect()->route('workspace.index')->with('success', 'Photo deleted successfully!');
+        }
+        
+        return redirect()->route('workspace.index')->with('error', 'No photo to delete.');
     }
 }

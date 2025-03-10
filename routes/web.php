@@ -96,7 +96,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{user}/details', [UserController::class, 'getUserDetails']);
         
         // Hapus route yang duplikat, gunakan hanya satu route untuk invite
-        Route::post('/users/invite', [UserController::class, 'invite'])->name('users.invite');
+       // Route::post('/users/invite', [UserController::class, 'invite'])->name('users.invite');
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
 Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
  
@@ -119,7 +119,7 @@ Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destro
     });
 
     Route::put('/users/{user}/edit', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}/remove', [UserController::class, 'destroy'])->name('users.destroy');
+    //Route::delete('/users/{user}/remove', [UserController::class, 'destroy'])->name('users.destroy');
 
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
@@ -156,6 +156,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('profile.security.update')
         ->middleware('auth');
 });
+Route::get('/settings/system', [SettingsController::class, 'system'])->name('settings.system');
+
 
 Route::prefix('settings/system')->name('system.')->group(function () {
     Route::get('/general-workspace', [SystemSettingsController::class, 'generalWorkspace'])->name('general-workspace');
@@ -173,7 +175,7 @@ Route::prefix('settings/system')->name('system.')->group(function () {
     Route::delete('/general-workspace/delete-logo', [SystemSettingsController::class, 'deleteCompanyLogo'])
         ->name('delete-company-logo');
     
-    Route::put('/workspace-settings/update', [WorkspaceSettingController::class, 'update'])
+    Route::put('/workspace', [SystemSettingsController::class, 'updateGeneralWorkspace'])
         ->name('workspace.update');
 });
 

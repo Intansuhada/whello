@@ -4,18 +4,18 @@
 <section class="content-detail active" id="general-workspace">
     <div class="notifications-wrapper">
         <div class="settings-container">
-            <!-- General Settings Section -->
-            <div class="settings-section mb-5">
-                <div class="settings-section-header mb-4">
-                    <h2 class="settings-main-title">General Settings</h2>
-                </div>
+            <form id="workspaceForm" action="{{ route('system.workspace.update') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
                 
-                <x-setting-card :hasHeader="false">
-                    <div class="settings-wrapper">
-                        <form id="workspaceForm" action="{{ route('system.workspace.update') }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                            @method('PUT')
-                            
+                <!-- General Settings Section -->
+                <div class="settings-section mb-5">
+                    <div class="settings-section-header mb-4">
+                        <h2 class="settings-main-title">General Settings</h2>
+                    </div>
+                    
+                    <x-setting-card :hasHeader="false">
+                        <div class="settings-wrapper">
                             <!-- Workspace Configuration -->
                             <div class="settings-block mb-5">
                                 <x-setting-card>
@@ -35,38 +35,36 @@
                                                 <tr>
                                                     <td>Workspace Name</td>
                                                     <td>
-                                                        <input type="text" name="workspace_name" value="{{ $workspace->name ?? '' }}" class="form-control" placeholder="Enter workspace name">
+                                                        <input type="text" name="workspace_name" value="{{ $workspaceSettings->workspace_name ?? '' }}" class="form-control">
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Photo Profile</td>
                                                     <td>
                                                         <div class="profile-photo-container">
-                                                            <div class="profile-photo-wrapper">
-                                                                <img src="{{ $workspace->logo_url ?? asset('images/image-company-logo.svg') }}" 
-                                                                     alt="Company Logo" 
-                                                                     id="companyLogoPreview" 
-                                                                     class="profile-photo">
-                                                                <input type="file" 
-                                                                       id="company-logo-input" 
-                                                                       name="logo" 
-                                                                       class="hidden" 
-                                                                       accept="image/*"
-                                                                       onchange="previewImage(this)">
-                                                            </div>
-                                                            <div class="photo-actions">
-                                                                <button type="button" 
-                                                                        class="btn btn-sm btn-secondary" 
-                                                                        onclick="document.getElementById('company-logo-input').click()">
-                                                                    Upload Photo
-                                                                </button>
-                                                                <button type="button" 
-                                                                        class="btn btn-sm btn-danger" 
-                                                                        id="deleteLogoBtn" 
-                                                                        {{ !isset($workspace->logo_url) ? 'disabled' : '' }}
-                                                                        onclick="deleteLogo()">
-                                                                    Delete Photo
-                                                                </button>
+                                                            <div class="d-flex flex-column align-items-center">
+                                                                <div class="profile-photo-wrapper mb-3">
+                                                                    <img src="{{ $workspaceSettings && $workspaceSettings->photo_profile 
+                                                                          ? Storage::url($workspaceSettings->photo_profile) 
+                                                                          : asset('images/image-company-logo.svg') }}" 
+                                                                         alt="Company Logo" 
+                                                                         id="companyLogoPreview"
+                                                                         class="profile-photo">
+                                                                    <input type="file" 
+                                                                           id="company-logo-input" 
+                                                                           name="logo" 
+                                                                           class="hidden" 
+                                                                           accept="image/*"
+                                                                           onchange="previewImage(this)">
+                                                                </div>
+                                                                <div class="photo-actions d-flex gap-2">
+                                                                    <button type="button" class="btn btn-sm btn-primary" onclick="document.getElementById('company-logo-input').click()">
+                                                                        Upload
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-danger" id="deleteLogoBtn" onclick="deleteLogo()">
+                                                                        Delete
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -74,25 +72,30 @@
                                                 <tr>
                                                     <td>Description</td>
                                                     <td>
-                                                        <textarea name="description" class="form-control" rows="3" placeholder="Enter workspace description">{{ $workspace->description ?? '' }}</textarea>
+                                                        <textarea name="description" class="form-control" rows="3">{{ $workspaceSettings->description ?? '' }}</textarea>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td>URL / Slug</td>
                                                     <td>
-                                                        <input type="text" name="slug" value="{{ $workspace->slug ?? '' }}" class="form-control" placeholder="Enter workspace URL/slug">
+                                                        <input type="text" name="url_slug" value="{{ $workspaceSettings->url_slug ?? '' }}" class="form-control">
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Owner</td>
                                                     <td>
-                                                        <input type="text" name="owner" value="{{ $workspace->owner_email ?? '' }}" class="form-control" placeholder="Enter owner email">
+                                                        <input type="email" name="owner_email" value="{{ $workspaceSettings->owner_email ?? '' }}" class="form-control">
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Team Members</td>
                                                     <td>
-                                                        <input type="number" name="team_members" value="{{ $workspace->team_members ?? '' }}" class="form-control" placeholder="Enter number of team members">
+                                                        <input type="number" 
+                                                               name="team_members" 
+                                                               value="{{ $userCount }}" 
+                                                               class="form-control" 
+                                                               readonly 
+                                                               title="This is automatically calculated from total users">
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -121,8 +124,7 @@
                                                     <td>Time Zone</td>
                                                     <td>
                                                         <select name="timezone" class="form-control">
-                                                            <option value="">Select timezone</option>
-                                                            <option value="UTC+07:00" {{ isset($workspace->timezone) && $workspace->timezone == 'UTC+07:00' ? 'selected' : '' }}>Bangkok, Hanoi, Jakarta (UTC+07:00)</option>
+                                                            <option value="UTC+07:00" {{ ($workspaceSettings->timezone ?? '') == 'UTC+07:00' ? 'selected' : '' }}>Bangkok, Hanoi, Jakarta (UTC+07:00)</option>
                                                             <!-- Add more timezone options as needed -->
                                                         </select>
                                                     </td>
@@ -131,42 +133,33 @@
                                                     <td>Time Format</td>
                                                     <td>
                                                         <select name="time_format" class="form-control">
-                                                            <option value="">Select time format</option>
-                                                            <option value="12" {{ isset($workspace->time_format) && $workspace->time_format == '12' ? 'selected' : '' }}>12 Hour Day</option>
-                                                            <option value="24" {{ isset($workspace->time_format) && $workspace->time_format == '24' ? 'selected' : '' }}>24 Hour Day</option>
+                                                            <option value="12" {{ ($workspaceSettings->time_format ?? '') == '12' ? 'selected' : '' }}>12 Hour Day</option>
+                                                            <option value="24" {{ ($workspaceSettings->time_format ?? '') == '24' ? 'selected' : '' }}>24 Hour Day</option>
                                                         </select>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Date Format</td>
-                                                    <td>
-                                                        <input type="date" name="date_format" value="{{ $workspace->date_format ?? '' }}" class="form-control">
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Default Language</td>
                                                     <td>
-                                                        <select name="language" class="form-control">
-                                                            <option value="">Select language</option>
-                                                            <option value="en" {{ isset($workspace->language) && $workspace->language == 'en' ? 'selected' : '' }}>English</option>
-                                                            <!-- Add more language options as needed -->
+                                                        <select name="default_language" class="form-control">
+                                                            <option value="en" {{ ($workspaceSettings->default_language ?? '') == 'en' ? 'selected' : '' }}>English</option>
+                                                            <!-- Add more language options -->
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Default Currency</td>
                                                     <td>
-                                                        <select name="currency" class="form-control">
-                                                            <option value="">Select currency</option>
-                                                            <option value="IDR" {{ isset($workspace->currency) && $workspace->currency == 'IDR' ? 'selected' : '' }}>Indonesia - IDR / Rupiah</option>
-                                                            <!-- Add more currency options as needed -->
+                                                        <select name="default_currency" class="form-control">
+                                                            <option value="IDR" {{ ($workspaceSettings->default_currency ?? '') == 'IDR' ? 'selected' : '' }}>Indonesia - IDR / Rupiah</option>
+                                                            <!-- Add more currency options -->
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Default Company Hourly Rate</td>
                                                     <td>
-                                                        <input type="text" name="hourly_rate" value="{{ $workspace->hourly_rate ?? '' }}" class="form-control" placeholder="Enter hourly rate">
+                                                        <input type="text" name="default_hourly_rate" value="{{ $workspaceSettings->default_hourly_rate ?? '' }}" class="form-control">
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -178,16 +171,16 @@
                             <!-- Form Actions -->
                             <div class="settings-actions">
                                 <button type="submit" class="btn-update">
-                                    Update Workspace
+                                    Update Settings
                                 </button>
                                 <a href="{{ route('settings.system') }}" class="btn-cancel">
                                     Cancel
                                 </a>
                             </div>
-                        </form>
-                    </div>
-                </x-setting-card>
-            </div>
+                        </div>
+                    </x-setting-card>
+                </div>
+            </form>
 
             <!-- Replace the existing Job Titles Section with this -->
             <div class="settings-section mb-5">
@@ -203,12 +196,9 @@
                             </div>
                             <div class="table-profile table-responsive">
                                 <div class="action-bar mb-4">
-                                    <div class="action-bar mb-4">
-                                        <a href="{{ route('job-titles.create') }}" class="btn btn-primary">Add Job Title</a>
-
-                                        
-                                    </div>
-                                    
+                                    <a href="{{ route('job-titles.create') }}" class="btn-add">
+                                        <span>Add Job Title</span>
+                                    </a>
                                 </div>
                                 <table class="table table-settings mb-0 job-titles-table">
                                     <thead>
@@ -225,14 +215,14 @@
                                                 <td>{{ $job->description ?? 'No description available' }}</td>
                                                 <td>
                                                     <div class="action-buttons">
-                                                        <a href="{{ route('job-titles.edit', $job->id) }}" class="btn-edit">
+                                                        <a href="{{ route('job-titles.edit', $job->id) }}" class="btn btn-sm btn-edit">
                                                             Edit
                                                         </a>
                                                         <form action="{{ route('job-titles.destroy', $job->id) }}" method="POST" class="d-inline" 
                                                               onsubmit="return confirmDelete(event)">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="btn-delete">Delete</button>
+                                                            <button type="submit" class="btn btn-sm btn-delete">Delete</button>
                                                         </form>
                                                     </div>
                                                 </td>
@@ -264,9 +254,9 @@
                             </div>
                             <div class="table-profile table-responsive">
                                 <div class="action-bar mb-4">
-                                    <a href="{{ route('department.createDepart') }}" class="btn btn-primary">Add Job Title</a>
-
-                                    
+                                    <a href="{{ route('department.createDepart') }}" class="btn-add">
+                                        <span>Add Department</span>
+                                    </a>
                                 </div>
                                 <table class="table table-settings mb-0 departments-table">
                                     <thead>
@@ -283,15 +273,15 @@
                                                 <td>{{ $department->description ?? 'No description available' }}</td>
                                                 <td>
                                                     <div class="action-buttons">
-                                                        <a href="{{ route('department.editDepart', $department->id) }}" class="btn-edit">
+                                                        <a href="{{ route('department.editDepart', $department->id) }}" class="btn btn-sm btn-edit">
                                                             Edit
                                                         </a>
-                                                        <form action="{{ route('department.destroyDepart', $department->id) }}" method="POST">
+                                                        <form action="{{ route('department.destroyDepart', $department->id) }}" method="POST" class="d-inline" 
+                                                              onsubmit="return confirmDelete(event)">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit">Delete</button>
+                                                            <button type="submit" class="btn btn-sm btn-delete">Delete</button>
                                                         </form>
-                                                        
                                                     </div>
                                                 </td>
                                             </tr>
@@ -311,6 +301,697 @@
     </div>
 </section>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('workspaceForm');
+    const alertContainer = document.getElementById('alertContainer');
+    const alertElement = alertContainer.querySelector('.alert');
+    const alertMessage = document.getElementById('alertMessage');
+    const companyLogoInput = document.getElementById('company-logo-input');
+    const companyLogoPreview = document.getElementById('companyLogoPreview');
+    const deleteLogoBtn = document.getElementById('deleteLogoBtn');
+
+    // Alert handling function
+    function showSuccessAlert(message) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: message,
+            timer: 1500,
+            showConfirmButton: false,
+            customClass: {
+                popup: 'rounded-lg shadow-xl'
+            }
+        });
+    }
+
+    // Handle logo preview
+    companyLogoInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                companyLogoPreview.src = e.target.result;
+                deleteLogoBtn.disabled = false;
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const response = await fetch(this.action, {
+                method: 'POST',
+                body: new FormData(this),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showSuccessAlert(result.message || 'Settings updated successfully');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: result.message || 'Failed to update settings',
+                    customClass: {
+                        popup: 'rounded-lg shadow-xl'
+                    }
+                });
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'Failed to save changes',
+                customClass: {
+                    popup: 'rounded-lg shadow-xl'
+                }
+            });
+        }
+    });
+
+    // Handle logo deletion
+    deleteLogoBtn.addEventListener('click', async function() {
+        if (!confirm('Are you sure you want to delete the company logo?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('{{ route("system.delete-company-logo") }}', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                companyLogoPreview.src = '{{ asset("images/image-company-logo.svg") }}';
+                showSuccessAlert(result.message);
+                this.disabled = true;
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: result.message,
+                    customClass: {
+                        popup: 'rounded-lg shadow-xl'
+                    }
+                });
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'Failed to delete company logo',
+                customClass: {
+                    popup: 'rounded-lg shadow-xl'
+                }
+            });
+        }
+    });
+});
+
+// Make sure all JavaScript runs after the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Add button click handlers
+    const addJobTitleBtn = document.querySelector('.btn-add[onclick="showAddJobTitleModal()"]');
+    const addDepartmentBtn = document.querySelector('.btn-add[onclick="showAddDepartmentModal()"]');
+
+    // Job Title Add Button
+    if (addJobTitleBtn) {
+        addJobTitleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showAddJobTitleModal();
+        });
+    }
+
+    // Department Add Button
+    if (addDepartmentBtn) {
+        addDepartmentBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showAddDepartmentModal();
+        });
+    }
+
+    // Edit buttons
+    document.querySelectorAll('.btn-edit').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const id = this.dataset.id;
+            const name = this.closest('tr').querySelector('td:first-child').textContent;
+            const description = this.closest('tr').querySelector('td:nth-child(2)').textContent;
+            
+            if (this.closest('table').classList.contains('job-titles-table')) {
+                editJobTitle(id, name, description);
+            } else {
+                editDepartment(id, name, description);
+            }
+        });
+    });
+
+    // Delete buttons
+    document.querySelectorAll('.btn-delete').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const id = this.dataset.id;
+            
+            if (this.closest('table').classList.contains('job-titles-table')) {
+                deleteJobTitle(id);
+            } else {
+                deleteDepartment(id);
+            }
+        });
+    });
+});
+
+// Function to edit job title
+function editJobTitle(id, name, description) {
+    Swal.fire({
+        title: '<span class="text-lg font-bold text-gray-800">Edit Job Title</span>',
+        html: `
+            <div class="p-2">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 text-left mb-2">Name</label>
+                    <input type="text" id="name" class="form-input block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="${name}">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 text-left mb-2">Description</label>
+                    <textarea id="description" class="form-textarea block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" rows="4">${description || ''}</textarea>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Update',
+        cancelButtonText: 'Cancel',
+        customClass: {
+            popup: 'rounded-lg shadow-xl',
+            confirmButton: 'bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-md mr-2 focus:outline-none focus:ring-2 focus:ring-blue-300',
+            cancelButton: 'bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300',
+            input: 'rounded-md shadow-sm border-gray-300 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50',
+            actions: 'border-t border-gray-100 px-6 py-3',
+            header: 'border-b border-gray-100 px-6 py-4'
+        },
+        buttonsStyling: false,
+        preConfirm: () => {
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+            
+            if (!name) {
+                Swal.showValidationMessage('Job title name is required');
+                return false;
+            }
+            
+            return { name, description };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/job-titles/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(result.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Job title updated successfully',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        customClass: {
+                            popup: 'rounded-lg shadow-xl',
+                        }
+                    }).then(() => {
+                        location.reload();
+                    });
+                }
+            });
+        }
+    });
+}
+
+// Function to edit department
+function editDepartment(id, name, description) {
+    Swal.fire({
+        title: 'Edit Department',
+        html: `
+            <input id="departmentName" class="swal2-input" value="${name}">
+            <textarea id="departmentDescription" class="swal2-textarea">${description}</textarea>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Update',
+        focusConfirm: false,
+        preConfirm: () => {
+            return {
+                name: document.getElementById('departmentName').value,
+                description: document.getElementById('departmentDescription').value
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/departments/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(result.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success', data.message, 'success');
+                    location.reload();
+                }
+            });
+        }
+    });
+}
+
+// Function to delete job title
+function deleteJobTitle(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/job-titles/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Deleted!', data.message, 'success');
+                    location.reload();
+                }
+            });
+        }
+    });
+}
+
+// Function to delete department
+function deleteDepartment(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/departments/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Deleted!', data.message, 'success');
+                    location.reload();
+                }
+            });
+        }
+    });
+}
+
+// Add these functions after your existing JavaScript code
+function showAddJobTitleModal() {
+    Swal.fire({
+        title: '<span class="text-lg font-bold text-gray-800">Add New Job Title</span>',
+        html: `
+            <div class="p-2">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 text-left mb-2">Name</label>
+                    <input type="text" id="name" class="form-input block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Enter job title name">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 text-left mb-2">Description</label>
+                    <textarea id="description" class="form-textarea block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" rows="4" placeholder="Enter description"></textarea>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        customClass: {
+            popup: 'rounded-lg shadow-xl',
+            confirmButton: 'bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-md mr-2 focus:outline-none focus:ring-2 focus:ring-blue-300',
+            cancelButton: 'bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300'
+        },
+        buttonsStyling: false,
+        preConfirm: () => {
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+            
+            if (!name) {
+                Swal.showValidationMessage('Job title name is required');
+                return false;
+            }
+            
+            return { name, description };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('{{ route("job-titles.store") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(result.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Job title added successfully',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        customClass: {
+                            popup: 'rounded-lg shadow-xl'
+                        }
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: data.message || 'Failed to add job title',
+                        customClass: {
+                            popup: 'rounded-lg shadow-xl'
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'An error occurred while adding the job title',
+                    customClass: {
+                        popup: 'rounded-lg shadow-xl'
+                    }
+                });
+            });
+        }
+    });
+}
+
+function showAddDepartmentModal() {
+    Swal.fire({
+        title: 'Add New Department',
+        html: `
+            <input id="departmentName" class="swal2-input" placeholder="Enter department name">
+            <textarea id="departmentDescription" class="swal2-textarea" placeholder="Enter description"></textarea>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Add',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+            const name = document.getElementById('departmentName').value;
+            const description = document.getElementById('departmentDescription').value;
+            
+            if (!name) {
+                Swal.showValidationMessage('Department name is required');
+                return false;
+            }
+            
+            return { name, description };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Send data to server
+            fetch('{{ route("departments.store") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(result.value)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success', 'Department added successfully', 'success')
+                    .then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', 'Failed to add department', 'error');
+                }
+            });
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Event delegation untuk tombol Add Job Title
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('btn-add-job-title')) {
+            e.preventDefault();
+            showAddJobTitleModal();
+        }
+    });
+
+    // Event delegation untuk tombol Add Department
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('btn-add-department')) {
+            e.preventDefault();
+            showAddDepartmentModal();
+        }
+    });
+
+    // Event delegation untuk tombol Edit
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('btn-edit')) {
+            e.preventDefault();
+            const button = e.target; // Dapatkan tombol yang diklik
+            const id = button.dataset.id; // Ambil ID dari dataset
+            const row = button.closest('tr'); // Cari elemen baris (tr)
+            const name = row.querySelector('td:nth-child(1)').textContent.trim();
+            const description = row.querySelector('td:nth-child(2)').textContent.trim();
+
+            if (button.closest('table').classList.contains('job-titles-table')) {
+                editJobTitle(id, name, description);
+            } else {
+                editDepartment(id, name, description);
+            }
+        }
+    });
+
+    // Event delegation untuk tombol Delete
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('btn-delete')) {
+            e.preventDefault();
+            const button = e.target; // Dapatkan tombol yang diklik
+            const id = button.dataset.id; // Ambil ID dari dataset
+
+            if (button.closest('table').classList.contains('job-titles-table')) {
+                deleteJobTitle(id);
+            } else {
+                deleteDepartment(id);
+            }
+        }
+    });
+});
+
+// Update the form submission for edit
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        if (this.method === 'POST' && this.action.includes('update')) {
+            e.preventDefault();
+            
+            Swal.fire({
+                title: 'Updating...',
+                text: 'Please wait',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            this.submit();
+        }
+    });
+});
+
+// Function to confirm delete
+function confirmDelete(e) {
+    e.preventDefault();
+    const form = e.target;
+    
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            form.submit();
+        }
+    });
+    
+    return false;
+}
+
+// Show alert messages from session
+@if(session('success'))
+    showSuccessAlert('{{ session('success') }}');
+@endif
+
+@if(session('error'))
+    Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: '{{ session('error') }}',
+        customClass: {
+            popup: 'rounded-lg shadow-xl'
+        }
+    });
+@endif
+
+// Add this CSS for better styling
+const style = document.createElement('style');
+style.textContent = `
+    .swal2-popup {
+        border-radius: 1rem !important;
+    }
+    .swal2-title {
+        color: #2D3748 !important;
+        font-size: 1.5rem !important;
+        padding: 1rem 0 !important;
+    }
+    .swal2-html-container {
+        margin: 0 !important;
+    }
+    .form-input, .form-textarea {
+        width: 100%;
+        transition: all 0.2s;
+    }
+    .form-input:focus, .form-textarea:focus {
+        border-color: #4299E1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+    }
+`;
+document.head.appendChild(style);
+
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            // Update both logos
+            document.getElementById('companyLogoPreview').src = e.target.result;
+            document.getElementById('navbarLogo').src = e.target.result;
+            document.getElementById('deleteLogoBtn').disabled = false;
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function deleteLogo() {
+    Swal.fire({
+        title: 'Delete Logo',
+        text: "Are you sure you want to delete this logo?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('{{ route("system.delete-company-logo") }}', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reset images to defaults
+                    document.getElementById('companyLogoPreview').src = '{{ asset("images/image-company-logo.svg") }}';
+                    document.getElementById('navbarLogo').src = '{{ asset("images/whello-logo.svg") }}';
+                    document.getElementById('company-logo-input').value = '';
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: 'Logo deleted successfully!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Failed to delete logo'
+                });
+            });
+        }
+    });
+}
+
+// Add this function to toggle between view and edit modes
+function toggleEditMode() {
+    const viewMode = document.getElementById('viewMode');
+    const editMode = document.getElementById('editMode');
+    
+    if (viewMode.style.display !== 'none') {
+        viewMode.style.display = 'none';
+        editMode.style.display = 'block';
+    } else {
+        viewMode.style.display = 'block';
+        editMode.style.display = 'none';
+    }
+}
+</script>
+@endpush
 
 <style>
 /* Enhanced Base Styles */
@@ -1046,6 +1727,10 @@ h2.settings-main-title,
     overflow: hidden;
     border: 2px solid #e5e7eb;
     position: relative;
+    background: #f7fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .profile-photo {
@@ -1068,644 +1753,176 @@ h2.settings-main-title,
 .hidden {
     display: none;
 }
+
+/* Enhanced Button Styles */
+.btn-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #4F46E5, #3B82F6);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+    text-decoration: none;
+    min-width: 120px;
+}
+
+.btn-add:hover {
+    background: linear-gradient(135deg, #3B82F6, #4F46E5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
+}
+
+.btn-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    background: #EBF5FF;
+    color: #2563EB;
+    border: 1px solid #BFDBFE;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-edit:hover {
+    background: #DBEAFE;
+    color: #1D4ED8;
+    border-color: #93C5FD;
+}
+
+.btn-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    background: #FEE2E2;
+    color: #DC2626;
+    border: 1px solid #FECACA;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-delete:hover {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border-color: #FCA5A5;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.action-bar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Update photo container and wrapper styles */
+.profile-photo-container {
+    display: flex;
+    align-items: start;
+    gap: 1.5rem;
+    max-width: 300px; /* Limit container width */
+}
+
+.profile-photo-wrapper {
+    width: 200px;         /* Fixed width */
+    height: 120px;        /* Fixed height with 16:9 aspect ratio */
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 2px solid #e5e7eb;
+    position: relative;
+    background: #f7fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;  /* Changed to contain to prevent stretching */
+    object-position: center;
+}
+
+/* Rest of your existing styles... */
+
+/* Update photo actions styles */
+.photo-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.5rem;
+    flex-direction: row; /* Changed from column to row */
+}
+
+.photo-actions .btn {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    height: 28px;
+    min-width: 70px;
+}
+
+/* Update container styles */
+.profile-photo-container {
+    width: auto;
+    max-width: 200px;
+}
+
+.profile-photo-wrapper {
+    width: 200px;
+    height: 100px;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Photo container and frame alignment */
+.profile-photo-container {
+    width: auto;
+    max-width: 165px; /* Match exact width of both buttons combined */
+}
+
+.profile-photo-wrapper {
+    width: 165px; /* Match container width */
+    height: 90px;
+    margin-bottom: 0.5rem !important;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+    background: #f7fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-actions {
+    display: flex;
+    justify-content: space-between;
+    width: 165px; /* Match wrapper width exactly */
+    gap: 5px;
+    margin-top: 0.5rem;
+}
+
+.photo-actions .btn {
+    flex: 1;
+    padding: 0.25rem 0;
+    font-size: 0.75rem;
+    height: 26px;
+    min-width: 80px;
+    border-radius: 0.375rem;
+}
 </style>
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('workspaceForm');
-    const alertContainer = document.getElementById('alertContainer');
-    const alertElement = alertContainer.querySelector('.alert');
-    const alertMessage = document.getElementById('alertMessage');
-    const companyLogoInput = document.getElementById('company-logo-input');
-    const companyLogoPreview = document.getElementById('companyLogoPreview');
-    const deleteLogoBtn = document.getElementById('deleteLogoBtn');
-
-    // Alert handling function
-    function showAlert(message, type = 'success') {
-        alertMessage.innerHTML = `
-            <div class="alert-content">
-                <span class="alert-icon"></span>
-                ${message}
-            </div>
-        `;
-        alertElement.classList.remove('alert-success', 'alert-danger');
-        alertElement.classList.add(`alert-${type}`);
-        alertContainer.style.display = 'block';
-        
-        setTimeout(() => {
-            alertElement.style.animation = 'slideOut 0.3s ease-in forwards';
-            setTimeout(() => {
-                alertContainer.style.display = 'none';
-                alertElement.style.animation = '';
-            }, 300);
-        }, 3000);
-    }
-
-    // Handle logo preview
-    companyLogoInput.addEventListener('change', function(e) {
-        if (this.files && this.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                companyLogoPreview.src = e.target.result;
-                deleteLogoBtn.disabled = false;
-            };
-            reader.readAsDataURL(this.files[0]);
-        }
-    });
-
-    // Handle form submission
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        try {
-            const response = await fetch(this.action, {
-                method: 'POST',
-                body: new FormData(this),
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                showAlert(result.message, 'success');
-            } else {
-                showAlert(result.message, 'danger');
-            }
-        } catch (error) {
-            showAlert('Failed to save changes', 'danger');
-        }
-    });
-
-    // Handle logo deletion
-    deleteLogoBtn.addEventListener('click', async function() {
-        if (!confirm('Are you sure you want to delete the company logo?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch('{{ route("system.delete-company-logo") }}', {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                    'Accept': 'application/json'
-                }
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                companyLogoPreview.src = '{{ asset("images/image-company-logo.svg") }}';
-                showAlert(result.message, 'success');
-                this.disabled = true;
-            } else {
-                showAlert(result.message, 'danger');
-            }
-        } catch (error) {
-            showAlert('Failed to delete company logo', 'danger');
-        }
-    });
-});
-
-// Make sure all JavaScript runs after the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Add button click handlers
-    const addJobTitleBtn = document.querySelector('.btn-add[onclick="showAddJobTitleModal()"]');
-    const addDepartmentBtn = document.querySelector('.btn-add[onclick="showAddDepartmentModal()"]');
-
-    // Job Title Add Button
-    if (addJobTitleBtn) {
-        addJobTitleBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showAddJobTitleModal();
-        });
-    }
-
-    // Department Add Button
-    if (addDepartmentBtn) {
-        addDepartmentBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showAddDepartmentModal();
-        });
-    }
-
-    // Edit buttons
-    document.querySelectorAll('.btn-edit').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const id = this.dataset.id;
-            const name = this.closest('tr').querySelector('td:first-child').textContent;
-            const description = this.closest('tr').querySelector('td:nth-child(2)').textContent;
-            
-            if (this.closest('table').classList.contains('job-titles-table')) {
-                editJobTitle(id, name, description);
-            } else {
-                editDepartment(id, name, description);
-            }
-        });
-    });
-
-    // Delete buttons
-    document.querySelectorAll('.btn-delete').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const id = this.dataset.id;
-            
-            if (this.closest('table').classList.contains('job-titles-table')) {
-                deleteJobTitle(id);
-            } else {
-                deleteDepartment(id);
-            }
-        });
-    });
-});
-
-// Function to edit job title
-function editJobTitle(id, name, description) {
-    Swal.fire({
-        title: '<span class="text-lg font-bold text-gray-800">Edit Job Title</span>',
-        html: `
-            <div class="p-2">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 text-left mb-2">Name</label>
-                    <input type="text" id="name" class="form-input block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="${name}">
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 text-left mb-2">Description</label>
-                    <textarea id="description" class="form-textarea block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" rows="4">${description || ''}</textarea>
-                </div>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Update',
-        cancelButtonText: 'Cancel',
-        customClass: {
-            popup: 'rounded-lg shadow-xl',
-            confirmButton: 'bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-md mr-2 focus:outline-none focus:ring-2 focus:ring-blue-300',
-            cancelButton: 'bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300',
-            input: 'rounded-md shadow-sm border-gray-300 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50',
-            actions: 'border-t border-gray-100 px-6 py-3',
-            header: 'border-b border-gray-100 px-6 py-4'
-        },
-        buttonsStyling: false,
-        preConfirm: () => {
-            const name = document.getElementById('name').value;
-            const description = document.getElementById('description').value;
-            
-            if (!name) {
-                Swal.showValidationMessage('Job title name is required');
-                return false;
-            }
-            
-            return { name, description };
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/job-titles/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify(result.value)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: 'Job title updated successfully',
-                        timer: 1500,
-                        showConfirmButton: false,
-                        customClass: {
-                            popup: 'rounded-lg shadow-xl',
-                        }
-                    }).then(() => {
-                        location.reload();
-                    });
-                }
-            });
-        }
-    });
-}
-
-// Function to edit department
-function editDepartment(id, name, description) {
-    Swal.fire({
-        title: 'Edit Department',
-        html: `
-            <input id="departmentName" class="swal2-input" value="${name}">
-            <textarea id="departmentDescription" class="swal2-textarea">${description}</textarea>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Update',
-        focusConfirm: false,
-        preConfirm: () => {
-            return {
-                name: document.getElementById('departmentName').value,
-                description: document.getElementById('departmentDescription').value
-            }
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/departments/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify(result.value)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Success', data.message, 'success');
-                    location.reload();
-                }
-            });
-        }
-    });
-}
-
-// Function to delete job title
-function deleteJobTitle(id) {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/job-titles/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Deleted!', data.message, 'success');
-                    location.reload();
-                }
-            });
-        }
-    });
-}
-
-// Function to delete department
-function deleteDepartment(id) {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/departments/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Deleted!', data.message, 'success');
-                    location.reload();
-                }
-            });
-        }
-    });
-}
-
-// Add these functions after your existing JavaScript code
-function showAddJobTitleModal() {
-    Swal.fire({
-        title: '<span class="text-lg font-bold text-gray-800">Add New Job Title</span>',
-        html: `
-            <div class="p-2">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 text-left mb-2">Name</label>
-                    <input type="text" id="name" class="form-input block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Enter job title name">
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 text-left mb-2">Description</label>
-                    <textarea id="description" class="form-textarea block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" rows="4" placeholder="Enter description"></textarea>
-                </div>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Add',
-        cancelButtonText: 'Cancel',
-        customClass: {
-            popup: 'rounded-lg shadow-xl',
-            confirmButton: 'bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-md mr-2 focus:outline-none focus:ring-2 focus:ring-blue-300',
-            cancelButton: 'bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300'
-        },
-        buttonsStyling: false,
-        preConfirm: () => {
-            const name = document.getElementById('name').value;
-            const description = document.getElementById('description').value;
-            
-            if (!name) {
-                Swal.showValidationMessage('Job title name is required');
-                return false;
-            }
-            
-            return { name, description };
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch('{{ route("job-titles.store") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify(result.value)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: 'Job title added successfully',
-                        timer: 1500,
-                        showConfirmButton: false,
-                        customClass: {
-                            popup: 'rounded-lg shadow-xl'
-                        }
-                    }).then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: data.message || 'Failed to add job title',
-                        customClass: {
-                            popup: 'rounded-lg shadow-xl'
-                        }
-                    });
-                }
-            })
-            .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: 'An error occurred while adding the job title',
-                    customClass: {
-                        popup: 'rounded-lg shadow-xl'
-                    }
-                });
-            });
-        }
-    });
-}
-
-function showAddDepartmentModal() {
-    Swal.fire({
-        title: 'Add New Department',
-        html: `
-            <input id="departmentName" class="swal2-input" placeholder="Enter department name">
-            <textarea id="departmentDescription" class="swal2-textarea" placeholder="Enter description"></textarea>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Add',
-        showLoaderOnConfirm: true,
-        preConfirm: () => {
-            const name = document.getElementById('departmentName').value;
-            const description = document.getElementById('departmentDescription').value;
-            
-            if (!name) {
-                Swal.showValidationMessage('Department name is required');
-                return false;
-            }
-            
-            return { name, description };
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Send data to server
-            fetch('{{ route("departments.store") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify(result.value)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Success', 'Department added successfully', 'success')
-                    .then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire('Error', 'Failed to add department', 'error');
-                }
-            });
-        }
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    // Event delegation untuk tombol Add Job Title
-    document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('btn-add-job-title')) {
-            e.preventDefault();
-            showAddJobTitleModal();
-        }
-    });
-
-    // Event delegation untuk tombol Add Department
-    document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('btn-add-department')) {
-            e.preventDefault();
-            showAddDepartmentModal();
-        }
-    });
-
-    // Event delegation untuk tombol Edit
-    document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('btn-edit')) {
-            e.preventDefault();
-            const button = e.target; // Dapatkan tombol yang diklik
-            const id = button.dataset.id; // Ambil ID dari dataset
-            const row = button.closest('tr'); // Cari elemen baris (tr)
-            const name = row.querySelector('td:nth-child(1)').textContent.trim();
-            const description = row.querySelector('td:nth-child(2)').textContent.trim();
-
-            if (button.closest('table').classList.contains('job-titles-table')) {
-                editJobTitle(id, name, description);
-            } else {
-                editDepartment(id, name, description);
-            }
-        }
-    });
-
-    // Event delegation untuk tombol Delete
-    document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('btn-delete')) {
-            e.preventDefault();
-            const button = e.target; // Dapatkan tombol yang diklik
-            const id = button.dataset.id; // Ambil ID dari dataset
-
-            if (button.closest('table').classList.contains('job-titles-table')) {
-                deleteJobTitle(id);
-            } else {
-                deleteDepartment(id);
-            }
-        }
-    });
-});
-
-// Update the form submission for edit
-document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-        if (this.method === 'POST' && this.action.includes('update')) {
-            e.preventDefault();
-            
-            Swal.fire({
-                title: 'Updating...',
-                text: 'Please wait',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            this.submit();
-        }
-    });
-});
-
-// Function to confirm delete
-function confirmDelete(e) {
-    e.preventDefault();
-    const form = e.target;
-    
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            form.submit();
-        }
-    });
-    
-    return false;
-}
-
-// Show alert messages from session
-@if(session('success'))
-    Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: '{{ session('success') }}',
-        timer: 3000,
-        showConfirmButton: false
-    });
-@endif
-
-@if(session('error'))
-    Swal.fire({
-        icon: 'error',
-        title: 'Error!',
-        text: '{{ session('error') }}',
-        timer: 3000,
-        showConfirmButton: false
-    });
-@endif
-
-// Add this CSS for better styling
-const style = document.createElement('style');
-style.textContent = `
-    .swal2-popup {
-        border-radius: 1rem !important;
-    }
-    .swal2-title {
-        color: #2D3748 !important;
-        font-size: 1.5rem !important;
-        padding: 1rem 0 !important;
-    }
-    .swal2-html-container {
-        margin: 0 !important;
-    }
-    .form-input, .form-textarea {
-        width: 100%;
-        transition: all 0.2s;
-    }
-    .form-input:focus, .form-textarea:focus {
-        border-color: #4299E1;
-        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
-    }
-`;
-document.head.appendChild(style);
-
-function previewImage(input) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            document.getElementById('companyLogoPreview').src = e.target.result;
-            document.getElementById('deleteLogoBtn').disabled = false;
-        }
-        
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-function deleteLogo() {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "Do you want to delete the company logo?",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            document.getElementById('companyLogoPreview').src = '{{ asset("images/image-company-logo.svg") }}';
-            document.getElementById('company-logo-input').value = '';
-            document.getElementById('deleteLogoBtn').disabled = true;
-            
-            // If you want to also delete from server immediately
-            fetch('{{ route("system.delete-company-logo") }}', {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Deleted!', 'Company logo has been deleted.', 'success');
-                }
-            });
-        }
-    });
-}
-</script>
-@endpush

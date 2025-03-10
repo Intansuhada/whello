@@ -3,18 +3,33 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\WorkspaceSetting;
+use Illuminate\Support\Facades\Storage;
 
 class SystemSettingsController extends Controller
 {
+    public function index()
+    {
+        return view('settings.system.index');
+    }
+
     public function generalWorkspace()
     {
         $jobTitles = \App\Models\JobTitle::all(['id', 'name', 'description']);
         $departments = \App\Models\Department::all(['id', 'name', 'description']);
-        return view('settings.system.general-workspace', compact('jobTitles', 'departments'));
+        $workspaceSettings = \DB::table('workspace_settings')->first();
+        $userCount = \DB::table('users')->count(); // Add this line
+        
+        // Add photo URL if exists
+        if ($workspaceSettings && $workspaceSettings->photo_profile) {
+            $workspaceSettings->photo_url = Storage::url($workspaceSettings->photo_profile);
+        }
+        
+        return view('settings.system.general-workspace', compact('jobTitles', 'departments', 'workspaceSettings', 'userCount'));
     }
 
     public function workingDay()
-    {
+    {   
         return view('settings.system.working-day');
     }
 
@@ -48,30 +63,38 @@ class SystemSettingsController extends Controller
 
     public function updateGeneralWorkspace(Request $request)
     {
-        $validated = $request->validate([
-            'workspace_name' => 'required|string|max:255',
-            'company_logo' => 'nullable|image|max:2048',
-            'description' => 'nullable|string',
-            'slug' => 'required|string|max:255',
-            'owner' => 'required|email',
-            'team_members' => 'required|integer',
-            'timezone' => 'required|string',
-            'time_format' => 'required|in:12,24',
-            'date_format' => 'required|date',
-            'language' => 'required|string',
-            'currency' => 'required|string',
-            'hourly_rate' => 'required|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'workspace_name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'url_slug' => 'required|string|max:255',
+                'owner_email' => 'required|email',
+                'team_members' => 'required|integer',
+                'timezone' => 'required|string',
+                'time_format' => 'required|in:12,24',
+                'date_format' => 'nullable|string',
+                'default_language' => 'required|string',
+                'default_currency' => 'required|string',
+                'default_hourly_rate' => 'nullable|numeric',
+            ]);
 
-        // Handle file upload if present
-        if ($request->hasFile('company_logo')) {
-            // Add file upload logic
+            // Handle logo upload if present
+            if ($request->hasFile('logo')) {
+                $logo = $request->file('logo');
+                $logoPath = $logo->store('workspace-logos', 'public');
+                $validated['photo_profile'] = $logoPath;
+            }
+
+            $workspace = WorkspaceSetting::firstOrNew();
+            $workspace->fill($validated);
+            $workspace->save();
+
+            return redirect()->back()->with('success', 'Workspace settings updated successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Failed to update workspace settings: ' . $e->getMessage())
+                ->withInput();
         }
-
-        // Update settings
-        // Add your update logic here
-
-        return back()->with('success', 'Workspace settings updated successfully');
     }
 
     public function deleteCompanyLogo()
@@ -79,14 +102,14 @@ class SystemSettingsController extends Controller
         try {
             // Get current workspace settings
             $workspace = Workspace::first(); // Adjust this according to your actual workspace retrieval logic
-            
+
             if ($workspace && $workspace->company_logo) {
                 // Delete the file from storage
                 Storage::delete($workspace->company_logo);
-                
+
                 // Update the database record
                 $workspace->update(['company_logo' => null]);
-                
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Company logo deleted successfully',

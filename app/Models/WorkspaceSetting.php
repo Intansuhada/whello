@@ -1,15 +1,21 @@
 <?php
+// Model: app/Models/WorkspaceSetting.php
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class WorkspaceSetting extends Model
 {
+    use HasFactory;
+
+    protected $table = 'workspace_settings';
+
     protected $fillable = [
         'workspace_name',
         'photo_profile',
-        'description', 
+        'description',
         'url_slug',
         'owner_email',
         'team_members',
@@ -18,6 +24,6 @@ class WorkspaceSetting extends Model
         'date_format',
         'default_language',
         'default_currency',
-        'default_hourly_rate'
+        'default_hourly_rate',
     ];
 }

@@ -2,7 +2,12 @@
     <nav class="navbar" id="navbar">
         <div class="navbar-left">
             <div class="sidebar-logo">
-                <img src="{{ asset('images/whello-logo.svg') }}" alt="Whello Logo">
+                <img src="{{ $workspaceSettings && $workspaceSettings->photo_profile 
+                    ? Storage::url($workspaceSettings->photo_profile) 
+                    : asset('images/whello-logo.svg') }}" 
+                     alt="Company Logo" 
+                     id="navbarLogo"
+                     class="sidebar-logo-img">
             </div>
             <div class="sidebar-toggle">
                 <img src="{{ asset('images/burger.svg') }}" alt="Toggle Sidebar" class="toggle-icon" style="width: 16px; height: 16px;">
@@ -42,3 +47,29 @@
     });
     </script>    
 </header>
+
+<style>
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    width: 200px; /* Set fixed width */
+    padding: 5px;
+    overflow: hidden; /* Prevent overflow */
+}
+
+.sidebar-logo img {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+
+/* Ensure navbar-left properly contains the logo */
+.navbar-left {
+    display: flex;
+    align-items: center;
+    height: 50px;
+}
+</style>
