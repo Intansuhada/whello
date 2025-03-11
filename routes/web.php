@@ -177,6 +177,47 @@ Route::prefix('settings/system')->name('system.')->group(function () {
     
     Route::put('/workspace', [SystemSettingsController::class, 'updateGeneralWorkspace'])
         ->name('workspace.update');
+
+    // Add these new routes for working days
+    Route::post('/working-days/add-leave', [SystemSettingsController::class, 'addLeave'])->name('working-days.add-leave');
+    Route::post('/working-days/{id}/update-leave', [SystemSettingsController::class, 'updateLeave'])->name('working-days.update-leave');
+    Route::delete('/working-days/{id}/delete-leave', [SystemSettingsController::class, 'deleteLeave'])->name('working-days.delete-leave');
+
+    // Add these new routes for holidays management
+    Route::post('/working-days/add-holiday', [SystemSettingsController::class, 'addHoliday'])->name('working-days.add-holiday');
+    Route::put('/working-days/{id}/update-holiday', [SystemSettingsController::class, 'updateHoliday'])->name('working-days.update-holiday');
+    Route::delete('/working-days/{id}/delete-holiday', [SystemSettingsController::class, 'deleteHoliday'])->name('working-days.delete-holiday');
+
+    Route::post('/working-days/add-leave-type', [WorkingDayController::class, 'addLeaveType'])
+        ->name('working-days.add-leave-type');
+    Route::post('/working-days/add-holiday', [WorkingDayController::class, 'addHoliday'])
+        ->name('working-days.add-holiday');
+
+    // Leave Types Routes
+    Route::get('/leave-types/create', [SystemSettingsController::class, 'createLeaveType'])->name('leave-types.create');
+    Route::post('/leave-types', [SystemSettingsController::class, 'storeLeaveType'])->name('leave-types.store');
+    
+    // Holidays Routes
+    Route::get('/holidays/create', [SystemSettingsController::class, 'createHoliday'])->name('holidays.create');
+    Route::post('/holidays', [SystemSettingsController::class, 'storeHoliday'])->name('holidays.store');
+
+    // Leave Types Routes
+    Route::get('/leave-types/{id}/edit', [SystemSettingsController::class, 'editLeaveType'])->name('leave-types.edit');
+    Route::put('/leave-types/{id}', [SystemSettingsController::class, 'updateLeaveType'])->name('leave-types.update');
+    Route::post('/leave-types/{id}/destroy', [SystemSettingsController::class, 'destroyLeaveType'])->name('leave-types.destroy');
+    
+    // Holidays Routes
+    Route::get('/holidays/{id}/edit', [SystemSettingsController::class, 'editHoliday'])->name('holidays.edit');
+    Route::put('/holidays/{id}', [SystemSettingsController::class, 'updateHoliday'])->name('holidays.update');
+    Route::post('/holidays/{id}/destroy', [SystemSettingsController::class, 'destroyHoliday'])->name('holidays.destroy');
+});
+
+// Add these routes inside your web.php file
+Route::prefix('system/working-days')->group(function () {
+    Route::post('/add-leave-type', [WorkingDayController::class, 'addLeaveType'])->name('system.working-days.add-leave-type');
+    Route::post('/add-holiday', [WorkingDayController::class, 'addHoliday'])->name('system.working-days.add-holiday');
+    Route::delete('/leave-type/{id}', [WorkingDayController::class, 'deleteLeaveType'])->name('system.working-days.delete-leave-type');
+    Route::delete('/holiday/{id}', [WorkingDayController::class, 'deleteHoliday'])->name('system.working-days.delete-holiday');
 });
 
 Route::get('/job-titles', [JobTitleController::class, 'index'])->name('job-titles.index');
