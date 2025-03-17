@@ -35,7 +35,10 @@ class Profile extends Model
         'full_name',
         'about',
         'department_id',
-        'job_title_id'
+        'job_title_id',
+        'name',
+        'pay_per_hour',
+        'avatar'
     ];
 
     // Tambahkan casting jika diperlukan

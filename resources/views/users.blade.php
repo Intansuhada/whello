@@ -65,27 +65,28 @@
                         @endif
                     </div>
                     <div class="user-overview">
-                        <div class="user-detail" id="userDetailSection" style="display: {{ isset($showUserDetail) ? 'flex' : 'none' }}">
+                        <div class="user-detail" id="userDetailSection" style="display: {{ isset($showUserDetail) && $showUserDetail ? 'flex' : 'none' }}">
                             <div class="detail-info">
                                 <!-- User Info Header -->
                                 <div class="detail-header">
                                     <div class="detail-header-left">
                                         <div class="user-detail-avatar">
-                                            <img src="{{ $detailUser['avatar'] ?? '' }}" alt="Profile Photo" id="detail-avatar">
+                                            <img src="{{ isset($selectedUser) ? ($selectedUser->profile && $selectedUser->profile->avatar ? Storage::url($selectedUser->profile->avatar) : asset('images/change-photo.svg')) : asset('images/change-photo.svg') }}" alt="Profile Photo" id="detail-avatar">
                                         </div>
                                         <div class="detail-text">
-                                            <span class="detail-name" id="detail-name">{{ $detailUser['name'] ?? '' }}</span>
-                                            <span class="detail-email" id="detail-id">{{ $detailUser['email'] ?? '' }}</span>
+                                            <span class="detail-name" id="detail-name">{{ isset($selectedUser) ? ($selectedUser->profile ? $selectedUser->profile->name : $selectedUser->email) : '' }}</span>
+                                            <span class="detail-email" id="detail-id">{{ isset($selectedUser) ? $selectedUser->email : '' }}</span>
                                         </div>
                                     </div>
                                     
+                                    @if(!isset($showEditForm))
                                     <div class="detail-buttons">
-                                        <a href="{{ route('users.edit', isset($currentUser) ? $currentUser->id : $user->id) }}" class="users-edit-btn">
+                                        <a href="{{ route('users.edit', isset($selectedUser) ? $selectedUser->id : ($user->id ?? 0)) }}" class="users-edit-btn">
                                             <img src="{{ asset('images/edit.svg') }}" alt="edit">
                                             Edit
                                         </a>
                                         
-                                        <form action="{{ route('users.destroy', isset($currentUser) ? $currentUser->id : $user->id) }}" method="POST">
+                                        <form action="{{ route('users.destroy', isset($selectedUser) ? $selectedUser->id : ($user->id ?? 0)) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="users-rmv-btn" onclick="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
@@ -94,141 +95,176 @@
                                             </button>
                                         </form>
                                     </div>
+                                    @endif
                                 </div>
 
                                 <!-- Edit Form -->
                                 @if(isset($showEditForm) && isset($selectedUser))
-                                    <div class="edit-user-form">
-                                        <div class="edit-form-header">
-                                            <h3>Edit User Profile</h3>
-                                        </div>
-                                        <form action="{{ route('users.update', $selectedUser->id) }}" method="POST">
-                                            @csrf
-                                            @method('PUT')
-                                            
-                                            <div class="form-group">
-                                                <label for="name">Name</label>
-                                                <input type="text" id="name" name="name" 
-                                                    value="{{ old('name', $selectedUser->profile->name ?? '') }}" required>
-                                                @error('name')
-                                                    <span class="error">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="department_id">Department</label>
-                                                <div class="custom-select">
-                                                    <input type="text" class="form-control select-display" 
-                                                           value="{{ $selectedUser->profile->department->name ?? '' }}" 
-                                                           readonly placeholder="Select Department">
-                                                    <select id="department_id" name="department_id" class="hidden-select" required>
-                                                        <option value="">Select Department</option>
-                                                        @foreach($departments as $department)
-                                                            <option value="{{ $department->id }}" 
-                                                                {{ (old('department_id', $selectedUser->profile->department_id ?? '') == $department->id) ? 'selected' : '' }}>
-                                                                {{ $department->name }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                    <div class="select-arrow">▼</div>
-                                                </div>
-                                            </div>
-
-                                            <div class="form-group">
-                                                <label for="job_title_id">Job Title</label>
-                                                <div class="custom-select">
-                                                    <input type="text" class="form-control select-display" 
-                                                           value="{{ $selectedUser->profile->jobTitle->name ?? '' }}" 
-                                                           readonly placeholder="Select Job Title">
-                                                    <select id="job_title_id" name="job_title_id" class="hidden-select" required>
-                                                        <option value="">Select Job Title</option>
-                                                        @foreach($jobTitles as $jobTitle)
-                                                            <option value="{{ $jobTitle->id }}"
-                                                                {{ (old('job_title_id', $selectedUser->profile->job_title_id ?? '') == $jobTitle->id) ? 'selected' : '' }}>
-                                                                {{ $jobTitle->name }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                    <div class="select-arrow">▼</div>
-                                                </div>
-                                            </div>
-                                            <div class="form-working-day">
-                                                <p><strong>Default Working Days & Hours </strong></p>
-                                                <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
-                                            </div>
-                                            
-                                            <div class="working-days-container">
-                                                <div class="working-days-header">
-                                                    <div class="header-day">Day</div>
-                                                    <div class="header-morning">Morning</div>
-                                                    <div class="header-afternoon">Afternoon</div>
-                                                </div>
-                                            
-                                                @php
-                                                    $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-                                                @endphp
-                                            
-                                                @foreach($days as $day)
-                                                    @php
-                                                        // Get working hours for current day from the database
-                                                        $workingHour = $selectedUser->workingHours->where('day', $day)->first();
-                                                        $isActive = $workingHour ? $workingHour->is_active : false;
-                                                        $isWeekend = in_array($day, ['saturday', 'sunday']);
-                                                    @endphp
-                                                    
-                                                    <div class="working-day-row {{ $isWeekend ? 'weekend' : '' }}">
-                                                        <div class="day-selector">
-                                                            <input type="checkbox" 
-                                                                   id="{{ $day }}" 
-                                                                   name="working_days[{{ $day }}]" 
-                                                                   class="round-checkbox"
-                                                                   {{ $isWeekend ? 'disabled' : ($isActive ? 'checked' : '') }}>
-                                                            <label for="{{ $day }}">{{ ucfirst($day) }}</label>
-                                                        </div>
-                                                        
-                                                        <div class="day-hours">
-                                                            @if($isWeekend)
-                                                                <div class="off-day-message">Off Day</div>
-                                                            @else
-                                                                <div class="morning-hours">
-                                                                    <input type="time" 
-                                                                           name="morning_start[{{ $day }}]" 
-                                                                           class="time-input" 
-                                                                           value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_start)->format('H:i') : '08:00' }}">
-                                                                    <span>to</span>
-                                                                    <input type="time" 
-                                                                           name="morning_end[{{ $day }}]" 
-                                                                           class="time-input" 
-                                                                           value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_end)->format('H:i') : '12:00' }}">
-                                                                </div>
-                                                                <div class="afternoon-hours">
-                                                                    <input type="time" 
-                                                                           name="afternoon_start[{{ $day }}]" 
-                                                                           class="time-input" 
-                                                                           value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_start)->format('H:i') : '13:00' }}">
-                                                                    <span>to</span>
-                                                                    <input type="time" 
-                                                                           name="afternoon_end[{{ $day }}]" 
-                                                                           class="time-input" 
-                                                                           value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_end)->format('H:i') : '17:00' }}">
-                                                                </div>
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                            
-                                            <!-- Add form action buttons -->
-                                            <div class="form-actions">
-                                                <button type="submit" class="btn-update">
-                                                    Update Profile
-                                                </button>
-                                                <a href="{{ route('users.index') }}" class="btn-cancel">
-                                                    Cancel
-                                                </a>
-                                            </div>
-                                        </form>
+                                <div class="edit-user-form">
+                                    <div class="edit-form-header">
+                                        <h3>Edit User Profile</h3>
                                     </div>
+                                    <form action="{{ route('users.update', $selectedUser->id) }}" method="POST">
+                                        @csrf
+                                        @method('PUT')
+
+                                        <div class="form-group">
+                                            <label for="name">Name</label>
+                                            <input type="text" id="name" name="name" 
+                                                value="{{ old('name', $selectedUser->profile->name ?? '') }}" required>
+                                            @error('name')
+                                                <span class="error">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="department_id">Department</label>
+                                            <div class="custom-select">
+                                                <input type="text" class="form-control select-display" 
+                                                    value="{{ $selectedUser->profile->department->name ?? '' }}" 
+                                                    readonly placeholder="Select Department">
+                                                <select id="department_id" name="department_id" class="hidden-select" required>
+                                                    <option value="">Select Department</option>
+                                                    @foreach($departments as $department)
+                                                        <option value="{{ $department->id }}" 
+                                                            {{ (old('department_id', $selectedUser->profile->department_id ?? '') == $department->id) ? 'selected' : '' }}>
+                                                            {{ $department->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <div class="select-arrow">▼</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="job_title_id">Job Title</label>
+                                            <div class="custom-select">
+                                                <input type="text" class="form-control select-display" 
+                                                    value="{{ $selectedUser->profile->jobTitle->name ?? '' }}" 
+                                                    readonly placeholder="Select Job Title">
+                                                <select id="job_title_id" name="job_title_id" class="hidden-select" required>
+                                                    <option value="">Select Job Title</option>
+                                                    @foreach($jobTitles as $jobTitle)
+                                                        <option value="{{ $jobTitle->id }}"
+                                                            {{ (old('job_title_id', $selectedUser->profile->job_title_id ?? '') == $jobTitle->id) ? 'selected' : '' }}>
+                                                            {{ $jobTitle->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <div class="select-arrow">▼</div>
+                                            </div>
+                                        </div>
+
+                                      <!-- Role Permission -->
+
+                                      <div class="form-group">
+                                        <label for="role">User Role</label>
+                                        <div class="custom-select">
+                                            <input type="text" class="form-control select-display" 
+                                                   value="{{ ucfirst($selectedUser->role->name ?? '') }}" 
+                                                   readonly placeholder="Select Role">
+                                            <select id="role" name="role" class="hidden-select" required>
+                                                <option value="">Select Role</option>
+                                                @foreach($roles ?? [] as $role)
+                                                    <option value="{{ $role->id }}" 
+                                                        {{ ($selectedUser->role_id ?? '') == $role->id ? 'selected' : '' }}>
+                                                        {{ ucfirst($role->name) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <div class="select-arrow">▼</div>
+                                        </div>
+                                    </div>
+                                    
+
+                                        <!-- Pay Per Hour -->
+                                        <div class="form-group">
+                                            <label for="pay_per_hour">Pay Per Hour</label>
+                                            <input type="number" id="pay_per_hour" name="pay_per_hour" 
+                                                value="{{ old('pay_per_hour', $selectedUser->profile->pay_per_hour ?? '') }}" 
+                                                min="0" step="0.01" required>
+                                            @error('pay_per_hour')
+                                                <span class="error">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+
+                                        <!-- Working Days Section -->
+                                        <div class="form-working-day">
+                                            <p><strong>Default Working Days & Hours </strong></p>
+                                            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+                                        </div>
+
+                                        <div class="working-days-container">
+                                            <div class="working-days-header">
+                                                <div class="header-day">Day</div>
+                                                <div class="header-morning">Morning</div>
+                                                <div class="header-afternoon">Afternoon</div>
+                                            </div>
+
+                                            @php
+                                                $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                                            @endphp
+
+                                            @foreach($days as $day)
+                                                @php
+                                                    $workingHour = $selectedUser->workingHours->where('day', $day)->first();
+                                                    $isActive = $workingHour ? $workingHour->is_active : false;
+                                                    $isWeekend = in_array($day, ['saturday', 'sunday']);
+                                                @endphp
+                                                
+                                                <div class="working-day-row {{ $isWeekend ? 'weekend' : '' }}">
+                                                    <div class="day-selector">
+                                                        <input type="checkbox" 
+                                                            id="{{ $day }}" 
+                                                            name="working_days[{{ $day }}]" 
+                                                            class="round-checkbox"
+                                                            {{ $isWeekend ? 'disabled' : ($isActive ? 'checked' : '') }}>
+                                                        <label for="{{ $day }}">{{ ucfirst($day) }}</label>
+                                                    </div>
+                                                    
+                                                    <div class="day-hours">
+                                                        @if($isWeekend)
+                                                            <div class="off-day-message">Off Day</div>
+                                                        @else
+                                                            <div class="morning-hours">
+                                                                <input type="time" 
+                                                                    name="morning_start[{{ $day }}]" 
+                                                                    class="time-input" 
+                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_start)->format('H:i') : '08:00' }}">
+                                                                <span>to</span>
+                                                                <input type="time" 
+                                                                    name="morning_end[{{ $day }}]" 
+                                                                    class="time-input" 
+                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_end)->format('H:i') : '12:00' }}">
+                                                            </div>
+                                                            <div class="afternoon-hours">
+                                                                <input type="time" 
+                                                                    name="afternoon_start[{{ $day }}]" 
+                                                                    class="time-input" 
+                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_start)->format('H:i') : '13:00' }}">
+                                                                <span>to</span>
+                                                                <input type="time" 
+                                                                    name="afternoon_end[{{ $day }}]" 
+                                                                    class="time-input" 
+                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_end)->format('H:i') : '17:00' }}">
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        
+                                        <!-- Form Actions -->
+                                        <div class="form-actions">
+                                            <button type="submit" class="btn-update">
+                                                Update Profile
+                                            </button>
+                                            <a href="{{ route('users.index') }}" class="btn-cancel">
+                                                Cancel
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
                                 @endif
                             </div>
                         </div>
@@ -313,10 +349,12 @@
                             <div id="leave-planner" class="tab-detail">
                                 <div class="tab-content-inner">
                                     <h3>Leave Planner</h3>
-                                    <!-- Add your leave planner content here -->
-                                    <p>User's leave planning information</p>
+                                    <div id="leavePlannerContent">
+                                        <div class="loading-message">Loading leave plans...</div>
+                                    </div>
                                 </div>
                             </div>
+                            
                             <div id="time-sheets" class="tab-detail">
                                 <div class="tab-content-inner">
                                     <h3>Time Sheets</h3>
@@ -913,6 +951,7 @@
 .form-group input, 
 .form-group .custom-select {
     border: 1px solid #E2E8F0;
+    border: 1px solid #E2E8F0;
     transition: all 0.2s;
 }
 
@@ -1148,6 +1187,60 @@
 .working-days-container {
     // ...existing styles...
 }
+
+/* ...existing styles... */
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.approved {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.status-badge.pending {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.status-badge.rejected {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.data-table th, 
+.data-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.data-table th {
+    background-color: #f8fafc;
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+}
+
+/* ...existing styles... */
 </style>
 
 @push('scripts')
@@ -1291,34 +1384,66 @@ document.addEventListener('DOMContentLoaded', function() {
             const userEmail = this.getAttribute('data-email');
             const userAvatar = this.querySelector('img').src;
 
-            // Update user detail section with email and avatar
+            // Update URL - Fix the URL construction
+            const baseUrl = window.location.origin + '/users';
+            const newUrl = `${baseUrl}/${userId}`;
+            window.history.pushState({ userId }, '', newUrl);
+
+            // Update user detail section
             document.getElementById('detail-name').textContent = userName;
             document.getElementById('detail-id').textContent = `Email: ${userEmail}`;
             document.getElementById('detail-avatar').src = userAvatar;
 
-            // Update form jika ada
-            const usernameInput = document.getElementById('username');
-            const emailInput = document.getElementById('email');
-            if (usernameInput) usernameInput.value = userName;
-            if (emailInput) emailInput.value = userEmail;
+            // Update tab links with new user ID
+            document.querySelectorAll('.tablink').forEach(tab => {
+                const oldHref = tab.getAttribute('href');
+                const newHref = oldHref.replace(/\/(\d+|0)(?=[^/]*$)/, `/${userId}`);
+                tab.setAttribute('href', newHref);
+            });
 
-            // Update URL edit dan delete buttons
-            const editBtn = document.querySelector('.users-edit-btn');
-            const deleteForm = document.querySelector('form[action*="destroy"]');
-            if (editBtn) editBtn.href = editBtn.href.replace(/\/\d+\/edit/, `/${userId}/edit`);
-            if (deleteForm) deleteForm.action = deleteForm.action.replace(/\/\d+$/, `/${userId}`);
-
-            // Show user detail and tabs
+            // Check if we're in edit mode
+            const isEditMode = document.querySelector('.edit-user-form') !== null;
+            
+            // Show appropriate sections based on mode
             userDetailSection.style.display = 'flex';
-            tabMenuSection.style.display = 'block';
-            tabContentSection.style.display = 'block';
+            if (!isEditMode) {
+                tabMenuSection.style.display = 'block';
+                tabContentSection.style.display = 'block';
+            } else {
+                tabMenuSection.style.display = 'none';
+                tabContentSection.style.display = 'none';
+            }
             noUserSelected.style.display = 'none';
+
+            // Update form if in edit mode
+            if (isEditMode) {
+                const editForm = document.querySelector('.edit-user-form');
+                if (editForm) {
+                    editForm.style.display = 'block';
+                }
+            }
 
             // Set active class on selected profile
             userProfiles.forEach(p => p.classList.remove('active'));
             this.classList.add('active');
+
+            // Update URL edit dan delete buttons if they exist
+            const editBtn = document.querySelector('.users-edit-btn');
+            const deleteForm = document.querySelector('form[action*="destroy"]');
+            if (editBtn) editBtn.href = editBtn.href.replace(/\/\d+\/edit/, `/${userId}/edit`);
+            if (deleteForm) deleteForm.action = deleteForm.action.replace(/\/\d+$/, `/${userId}`);
         });
     });
+
+    // Automatically trigger click for edit mode if user ID is in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const editUserId = urlParams.get('user_id');
+    if (editUserId) {
+        const userProfile = document.querySelector(`.user-profile[data-user-id="${editUserId}"]`);
+        if (userProfile) {
+            userProfile.click();
+        }
+    }
 
     // Tab handling
     const tablinks = document.querySelectorAll('.tablink');
@@ -1349,7 +1474,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Remove the loadTabContent function as it's no longer needed
+    // Add handler for browser back/forward buttons
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.userId) {
+            const userProfile = document.querySelector(`.user-profile[data-user-id="${e.state.userId}"]`);
+            if (userProfile) {
+                userProfile.click();
+            }
+        } else {
+            // Handle return to base users page
+            document.querySelectorAll('.user-profile').forEach(p => p.classList.remove('active'));
+            document.getElementById('userDetailSection').style.display = 'none';
+            document.getElementById('tabMenuSection').style.display = 'none';
+            document.getElementById('tabContentSection').style.display = 'none';
+            document.getElementById('noUserSelected').style.display = 'flex';
+        }
+    });
+
+    // Check URL on page load for direct access to user
+    const pathParts = window.location.pathname.split('/');
+    const userId = pathParts[pathParts.length - 1];
+    if (userId && !isNaN(userId)) {
+        const userProfile = document.querySelector(`.user-profile[data-user-id="${userId}"]`);
+        if (userProfile) {
+            userProfile.click();
+        }
+    }
 
     // Handle custom select displays
     document.querySelectorAll('.hidden-select').forEach(select => {
@@ -1401,7 +1551,125 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Add this inside your existing script tag after the tab click handler
+    const leavePlannerTab = document.querySelector('[data-target="#leave-planner"]');
+    if (leavePlannerTab) {
+        leavePlannerTab.addEventListener('click', async function() {
+            const userId = window.location.pathname.split('/').pop();
+            const leavePlannerContent = document.getElementById('leavePlannerContent');
+            
+            if (!userId || isNaN(userId)) {
+                leavePlannerContent.innerHTML = `
+                    <div class="no-data-message">
+                        Please select a user to view their leave plans
+                    </div>`;
+                return;
+            }
+
+            leavePlannerContent.innerHTML = '<div class="loading-message">Loading leave plans...</div>';
+            
+            try {
+                const response = await fetch(`/users/${userId}/leave-plans`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to load leave plans');
+                }
+
+                if (data.leavePlans && data.leavePlans.length > 0) {
+                    let tableHtml = `
+                        <table class="data-table" width="100%">
+                            <thead>
+                                <tr>
+                                    <th>Leave Type</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                    
+                    data.leavePlans.forEach(leave => {
+                        const startDate = new Date(leave.start_date).toLocaleDateString('id-ID', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                        const endDate = new Date(leave.end_date).toLocaleDateString('id-ID', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                        
+                        tableHtml += `
+                            <tr>
+                                <td>${leave.leave_type}</td>
+                                <td>${startDate}</td>
+                                <td>${endDate}</td>
+                                <td>${leave.description || '-'}</td>
+                                <td><span class="status-badge ${leave.status.toLowerCase()}">${leave.status}</span></td>
+                                <td>
+                                    <select class="status-select" data-leave-id="${leave.id}" onchange="updateLeaveStatus(this, ${leave.id})">
+                                        <option value="pending" ${leave.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                        <option value="approved" ${leave.status === 'approved' ? 'selected' : ''}>Approved</option>
+                                        <option value="rejected" ${leave.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                                    </select>
+                                </td>
+                            </tr>`;
+                    });
+                    
+                    tableHtml += `
+                            </tbody>
+                        </table>`;
+                    leavePlannerContent.innerHTML = tableHtml;
+                } else {
+                    leavePlannerContent.innerHTML = `
+                        <div class="no-data-message">
+                            No leave plans found for this user
+                        </div>`;
+                }
+            } catch (error) {
+                console.error('Error loading leave plans:', error);
+                leavePlannerContent.innerHTML = `
+                    <div class="error-message">
+                        Failed to load leave plans. Please try again.
+                    </div>`;
+            }
+        });
+    }
 });
+
+async function updateLeaveStatus(select, leaveId) {
+    try {
+        const response = await fetch(`/leave-plans/${leaveId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ status: select.value })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            const statusBadge = select.closest('tr').querySelector('.status-badge');
+            statusBadge.className = `status-badge ${select.value.toLowerCase()}`;
+            statusBadge.textContent = select.value;
+            showAlert('Status updated successfully', 'success');
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Failed to update status', 'danger');
+        // Reset select to previous value
+        select.value = select.querySelector('[selected]').value;
+    }
+}
 </script>
 
 

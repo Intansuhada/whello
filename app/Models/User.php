@@ -122,4 +122,9 @@ class User extends Authenticatable implements MustVerifyEmail
         }
         return asset('images/change-photo.svg');
     }
+
+    public function leavePlans()
+    {
+        return $this->hasMany(LeavePlan::class);
+    }
 }

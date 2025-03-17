@@ -16,7 +16,10 @@ class UserProfile extends Model
         'avatar',
         'job_title_id',
         'department_id',
-        'about'
+        'working_hours',
+        'pay_per_hour',
+        'about',
+        'phone'
     ];
 
     protected $with = ['department', 'jobTitle'];

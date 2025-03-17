@@ -30,17 +30,22 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with(['profile.jobTitle', 'role'])->get();
+        $leavePlans = DB::table('leave_plans')->get();
+        $selectedUser = null;
+        $showUserDetail = false;
+        $detailUser = null;
         
-        // Debug logging
-        foreach($users as $user) {
-            \Log::info('User profile:', [
-                'user_id' => $user->id,
-                'has_profile' => $user->profile ? 'yes' : 'no',
-                'job_title' => $user->profile?->jobTitle?->name ?? 'none'
-            ]);
+        if ($users->count() > 0) {
+            $selectedUser = $users->first();
+            $detailUser = [
+                'name' => $selectedUser->profile->name ?? $selectedUser->email,
+                'avatar' => $selectedUser->profile && $selectedUser->profile->avatar ? 
+                    Storage::url($selectedUser->profile->avatar) : 
+                    asset('images/change-photo.svg')
+            ];
         }
         
-        return view('users', compact('users'));
+        return view('users', compact('users', 'leavePlans', 'selectedUser', 'detailUser', 'showUserDetail'));
     }
 
     /**
@@ -263,9 +268,35 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($userId);
-            return view('users.tabs.leave-planner', compact('user'));
+            $leaves = DB::table('leave_plans')
+                        ->where('user_id', $userId)
+                        ->select('id', 'leave_type_id', 'start_date', 'end_date', 'description', 'status', 'created_at', 'updated_at')
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+    
+            return view('users.tabs.leave-planner', compact('user', 'leaves'));
         } catch (\Exception $e) {
-            return '<div class="error">Failed to load leave planner data</div>';
+            return response()->view('errors.500', ['message' => 'Failed to load leave planner data'], 500);
+        }
+    }
+    
+    public function updateLeaveStatus(Request $request, $id)
+    {
+        try {
+            DB::table('leave_plans')
+                ->where('id', $id)
+                ->update(['status' => $request->status]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating leave status: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status'
+            ], 500);
         }
     }
 
@@ -299,52 +330,33 @@ class UserController extends Controller
         }
     }
 
-    public function edit($id)
+    public function edit(User $user)
     {
-        try {
-            // Load user with all necessary relationships
-            $selectedUser = User::with(['profile.department', 'profile.jobTitle', 'workingHours'])->findOrFail($id);
-            $users = User::with(['profile.jobTitle', 'role'])->get();
-            $departments = Department::all();
-            $jobTitles = JobTitle::all();
-    
-            // Load working hours
-            $workingHours = $selectedUser->workingHours->keyBy('day');
-    
-            // Log for debugging
-            Log::info('Edit user data:', [
-                'user_id' => $selectedUser->id,
-                'profile' => $selectedUser->profile,
-                'department' => $selectedUser->profile?->department,
-                'job_title' => $selectedUser->profile?->jobTitle,
-                'working_hours' => $workingHours
-            ]);
-    
-            return view('users', [
-                'users' => $users,
-                'selectedUser' => $selectedUser,
-                'showEditForm' => true,
-                'showUserDetail' => true,
-                'departments' => $departments,
-                'jobTitles' => $jobTitles,
-                'workingHours' => $workingHours,
-                'detailUser' => [
-                    'id' => $selectedUser->id,
-                    'name' => $selectedUser->profile?->name ?? $selectedUser->email,
-                    'email' => $selectedUser->email,
-                    'avatar' => $selectedUser->profile?->avatar ? 
-                        Storage::url($selectedUser->profile->avatar) : 
-                        asset('images/change-photo.svg')
-                ],
-                'currentUser' => $selectedUser
-            ]);
-    
-        } catch (\Exception $e) {
-            Log::error('Error loading user edit form: ' . $e->getMessage());
-            return redirect()
-                ->back()
-                ->with('error', 'Failed to load user data. Please try again.');
-        }
+        $selectedUser = $user;
+        $showEditForm = true;
+        $showUserDetail = true; // Tambahkan ini
+        $departments = Department::all();
+        $jobTitles = JobTitle::all();
+        $users = User::with(['profile.jobTitle', 'role'])->get();
+        $roles = \App\Models\Role::all();
+        $detailUser = [
+            'name' => $user->profile->name ?? $user->email,
+            'email' => $user->email,
+            'avatar' => $user->profile && $user->profile->avatar ? 
+                Storage::url($user->profile->avatar) : 
+                asset('images/change-photo.svg')
+        ];
+
+        return view('users', compact(
+            'selectedUser',
+            'showEditForm',
+            'showUserDetail', // Tambahkan ini
+            'departments',
+            'jobTitles',
+            'users',
+            'roles',
+            'detailUser' // Tambahkan ini
+        ))->with('user_id', $user->id);  // Tambahkan ini
     }
     
     public function update(Request $request, $id)
@@ -359,6 +371,7 @@ class UserController extends Controller
                 'name' => 'required|string|max:255',
                 'department_id' => 'required|exists:departments,id',
                 'job_title_id' => 'required|exists:job_titles,id',
+                'pay_per_hour' => 'nullable|numeric|min:0', // Add validation for pay_per_hour
             ]);
 
             // Update profile
@@ -367,6 +380,7 @@ class UserController extends Controller
                 'name' => $validated['name'],
                 'department_id' => $validated['department_id'],
                 'job_title_id' => $validated['job_title_id'],
+                'pay_per_hour' => $validated['pay_per_hour'], // Add this line to update pay_per_hour
             ]);
 
             // Delete existing working hours
@@ -420,5 +434,209 @@ class UserController extends Controller
     private function getRoleId($roleName)
     {
         return strtolower($roleName) === 'administrator' ? 1 : 2;
+    }
+
+    public function getLeavePlans(User $user)
+    {
+        try {
+            $leavePlans = DB::table('leave_plans as lp')
+                ->join('leave_types as lt', 'lp.leave_type_id', '=', 'lt.id')
+                ->select(
+                    'lp.id',
+                    'lt.name as leave_type',
+                    'lp.start_date',
+                    'lp.end_date',
+                    'lp.description',
+                    'lp.status'
+                )
+                ->where('lp.user_id', $user->id)
+                ->orderBy('lp.start_date', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'leavePlans' => $leavePlans
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching leave plans: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load leave plans'
+            ], 500);
+        }
+    }
+
+    public function show(User $user)
+    {
+        $users = User::with(['profile.jobTitle', 'role'])->get();
+        $leavePlans = DB::table('leave_plans')->get();
+        $detailUser = [
+            'name' => $user->profile->name ?? $user->email,
+            'email' => $user->email,
+            'avatar' => $user->profile && $user->profile->avatar ? 
+                Storage::url($user->profile->avatar) : 
+                asset('images/change-photo.svg')
+        ];
+        
+        return view('users', compact('users', 'leavePlans', 'detailUser'));
+    }
+
+    public function leaveHistory()
+    {
+        try {
+            $user = auth()->user();
+            
+            // Get counts with logging
+            $rejectedLeaves = DB::table('leave_plans')
+                ->where('user_id', $user->id)
+                ->where('status', 'rejected')
+                ->count();  // Changed from ->get() to ->count()
+                
+            \Log::info('Rejected leaves count:', ['count' => $rejectedLeaves]);
+            
+            // Get other counts
+            $approvedLeaves = DB::table('leave_plans')
+                ->where('user_id', $user->id)
+                ->where('status', 'approved')
+                ->count();
+                
+            $pendingLeaves = DB::table('leave_plans')
+                ->where('user_id', $user->id)
+                ->where('status', 'pending')
+                ->count();
+
+            // Get leave plans with type information
+            $leavePlans = DB::table('leave_plans as lp')
+                ->join('leave_types as lt', 'lp.leave_type_id', '=', 'lt.id')
+                ->select(
+                    'lp.*', 
+                    'lt.name as leave_type_name',
+                    'lt.code'
+                )
+                ->where('lp.user_id', $user->id)
+                ->orderBy('lp.created_at', 'desc')
+                ->get();
+
+            return view('settings.leave.history', compact(
+                'leavePlans',
+                'rejectedLeaves',  // Changed from rejectedCount to rejectedLeaves
+                'approvedLeaves',
+                'pendingLeaves'
+            ));
+
+        } catch (\Exception $e) {
+            \Log::error('Error in leave history: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load leave history.');
+        }
+    }
+
+    public function calendar()
+    {
+        try {
+            $user = auth()->user();
+            
+            // Tambahkan logging untuk memeriksa nilai status yang sebenarnya
+            $allLeaves = DB::table('leave_plans')
+                ->where('user_id', $user->id)
+                ->select('status')
+                ->get();
+                
+            \Log::info('Status cuti yang ada:', $allLeaves->toArray());
+            
+            // Hitung ulang dengan memperhatikan case sensitivity
+            $rejectedLeaves = DB::table('leave_plans')
+                ->where('user_id', $user->id)
+                ->where('status', 'rejected')
+                ->count();
+                
+            $approvedLeaves = DB::table('leave_plans')
+                ->where('user_id', $user->id)
+                ->where('status', 'approved')
+                ->count();
+                
+            $pendingLeaves = DB::table('leave_plans')
+                ->where('user_id', $user->id)
+                ->where('status', 'pending')
+                ->count();
+
+            // Siapkan data bulan
+            $months = [];
+            $year = request('year', now()->year);
+            for ($m = 1; $m <= 12; $m++) {
+                $months[$m] = [
+                    'name' => date('F', mktime(0, 0, 0, $m, 1)),
+                ];
+            }
+
+            // Debug untuk melihat data yang diambil
+            \Log::info('User ID: ' . $user->id);
+
+            // Ambil semua data cuti user dan gabungkan dengan tipe cuti
+            $leaves = DB::table('leave_plans')
+                ->where('user_id', $user->id)
+                ->whereYear('start_date', $year) // Tambahkan filter tahun
+                ->get();
+
+            \Log::info('Leave data:', $leaves->toArray());
+
+            // Susun data cuti per tanggal
+            $leaveDays = [];
+            foreach ($leaves as $leave) {
+                $start = \Carbon\Carbon::parse($leave->start_date);
+                $end = \Carbon\Carbon::parse($leave->end_date);
+                
+                // Loop setiap hari dalam rentang cuti
+                for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                    $dateStr = $date->format('Y-m-d');
+                    $leaveDays[$dateStr] = [
+                        'status' => $leave->status,
+                        'description' => $leave->description
+                    ];
+                    
+                    // Debug untuk melihat data yang dimasukkan ke array
+                    \Log::info("Adding leave day: {$dateStr}", [
+                        'status' => $leave->status,
+                        'description' => $leave->description
+                    ]);
+                }
+            }
+
+            // Data hari libur (kosong untuk sementara)
+            $holidays = [];
+
+            return view('settings.leave.calendar', compact(
+                'months',
+                'year',
+                'holidays',
+                'leaveDays', // Array berisi data cuti per tanggal
+                'rejectedLeaves',
+                'approvedLeaves',
+                'pendingLeaves'
+            ));
+        } catch (\Exception $e) {
+            \Log::error('Error in calendar: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memuat kalender.');
+        }
+    }
+
+    public function leaveStore(Request $request)
+    {
+        try {
+            DB::table('leave_plans')->insert([
+                'user_id' => auth()->id(),
+                'leave_type_id' => $request->leave_type_id,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'description' => $request->description,
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            return redirect()->route('settings.leave.calendar')
+                ->with('success', 'Leave request has been successfully submitted!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to submit leave request. Please try again.');
+        }
     }
 }

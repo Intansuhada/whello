@@ -450,41 +450,6 @@ function showAddHolidayModal() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    <input type="date" id="holidayDate" class="form-control">
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 text-left mb-2">Description</label>
-                    <textarea id="holidayDescription" class="form-textarea" rows="3"></textarea>
-                </div>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Add',
-        cancelButtonText: 'Cancel',
-        customClass: {
-            popup: 'rounded-lg shadow-xl',
-            confirmButton: 'btn-update',
-            cancelButton: 'btn-cancel'
-        },
-        buttonsStyling: false,
-        preConfirm: () => {
-            const holidayName = document.getElementById('holidayName').value;
-            const holidayDate = document.getElementById('holidayDate').value;
-            const holidayDescription = document.getElementById('holidayDescription').value;
-
-            if (!holidayName || !holidayDate) {
-                Swal.showValidationMessage('Holiday name and date are required');
-                return false;
-            }
-
-            return { holidayName, holidayDate, holidayDescription };
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch('{{ route("system.working-days.add-holiday") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify(result.value)

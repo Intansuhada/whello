@@ -95,7 +95,7 @@
                         </li>
                     @endif
                     <li>
-                        <a href="#" class="submenu-link {{ request()->is('leave-planning') ? 'active' : '' }}">
+                        <a href="{{ route('system.leave-planning') }}" class="submenu-link {{ request()->routeIs('system.leave.*') ? 'active' : '' }}">
                             Leave Planning
                         </a>
                     </li>

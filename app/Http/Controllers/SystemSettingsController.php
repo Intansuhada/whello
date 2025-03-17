@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // Add this line
+use Illuminate\Support\Facades\DB;
 use App\Models\WorkspaceSetting;
 use App\Models\WorkingDay;
 use App\Models\LeaveType;
+use App\Models\LeavePlan;
 use App\Models\CompanyHoliday;
+use Carbon\Carbon;
 use App\Models\TimezoneSetting;
 use Illuminate\Support\Facades\Storage;
 
@@ -55,6 +57,60 @@ class SystemSettingsController extends Controller
     public function timeAndExpenses()
     {
         return view('settings.system.time-expenses');
+    }
+
+    public function leavePlanning()
+    {
+        try {
+            $user = auth()->user();
+            $activeView = request('view', 'calendar'); // Default to calendar view
+            
+            // Get leave statistics
+            $remainingLeaves = 20;
+            $approvedLeaves = LeavePlan::where('user_id', $user->id)
+                                     ->where('status', 'approved')
+                                     ->count();
+            $pendingLeaves = LeavePlan::where('user_id', $user->id)
+                                     ->where('status', 'pending')
+                                     ->count();
+
+            // Get leave types and leave plans
+            $leaveTypes = LeaveType::all();
+            $leavePlans = LeavePlan::where('user_id', $user->id)
+                                  ->with('leaveType')
+                                  ->orderBy('start_date', 'desc')
+                                  ->get();
+
+            $events = $leavePlans->map(function ($leave) {
+                $colors = [
+                    'approved' => '#4CAF50',
+                    'pending' => '#FFC107',
+                    'rejected' => '#f44336'
+                ];
+
+                return [
+                    'id' => $leave->id,
+                    'title' => $leave->leaveType->name,
+                    'start' => $leave->start_date,
+                    'end' => $leave->end_date,
+                    'color' => $colors[$leave->status] ?? '#4CAF50',
+                    'allDay' => true
+                ];
+            });
+
+            return view('settings.leave-planning', compact(
+                'activeView',
+                'remainingLeaves',
+                'approvedLeaves',
+                'pendingLeaves',
+                'leaveTypes',
+                'leavePlans',
+                'events'
+            ));
+        } catch (\Exception $e) {
+            \Log::error('Error in leavePlanning:', ['error' => $e->getMessage()]);
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function updateWorkingDay(Request $request)
@@ -374,5 +430,185 @@ class SystemSettingsController extends Controller
 
         return redirect()->route('system.working-day')
             ->with('success', 'Holiday created successfully');
+    }
+
+    public function updateLeavePlanning(Request $request)
+    {
+        try {
+            // Add your leave planning update logic here
+            return redirect()->back()->with('success', 'Leave planning updated successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to update leave planning');
+        }
+    }
+
+    public function storeLeavePlan(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'leave_type_id' => 'required|exists:leave_types,id',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'description' => 'nullable|string'
+            ]);
+
+            $leavePlan = new LeavePlan([
+                'user_id' => auth()->id(),
+                'leave_type_id' => $validated['leave_type_id'],
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+                'description' => $validated['description'],
+                'status' => 'pending'
+            ]);
+
+            $leavePlan->save();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Leave plan created successfully',
+                    'data' => $leavePlan->load('leaveType')
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Leave plan created successfully');
+        } catch (\Exception $e) {
+            \Log::error('Error creating leave plan:', ['error' => $e->getMessage()]);
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create leave plan: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return back()->with('error', 'Failed to create leave plan: ' . $e->getMessage());
+        }
+    }
+
+    public function leaveCalendar()
+    {
+        try {
+            $user = auth()->user();
+            $year = now()->year;
+            
+            // Fix holiday date handling with correct Carbon namespace
+            $holidays = CompanyHoliday::all()->mapWithKeys(function($holiday) {
+                $dateStr = Carbon::parse($holiday->date)->format('Y-m-d');
+                return [$dateStr => [
+                    'name' => $holiday->name,
+                    'description' => $holiday->description
+                ]];
+            })->toArray();
+
+            // Create months array
+            $months = [];
+            for ($i = 1; $i <= 12; $i++) {
+                $months[$i] = [
+                    'name' => date('F', mktime(0, 0, 0, $i, 1)),
+                    'number' => $i
+                ];
+            }
+
+            // Get leave days with status
+            $leaveDays = [];
+            $events = LeavePlan::where('user_id', $user->id)
+                ->with('leaveType')
+                ->get();
+
+            foreach ($events as $event) {
+                $start = Carbon::parse($event->start_date);
+                $end = Carbon::parse($event->end_date);
+                
+                while ($start->lte($end)) {
+                    $dateStr = $start->format('Y-m-d');
+                    $leaveDays[$dateStr] = [
+                        'status' => $event->status,
+                        'description' => $event->description,
+                        'type' => $event->leaveType->name
+                    ];
+                    $start = $start->copy()->addDay(); // Perbaikan untuk menghindari modifikasi date original
+                }
+            }
+
+            // Debug log untuk melihat data leave
+            \Log::info('Leave Days Data:', $leaveDays);
+
+            // Get statistics
+            $remainingLeaves = 20; 
+            $approvedLeaves = LeavePlan::where('user_id', $user->id)
+                                     ->where('status', 'approved')
+                                     ->count();
+            $pendingLeaves = LeavePlan::where('user_id', $user->id)
+                                     ->where('status', 'pending')
+                                     ->count();
+            $rejectedLeaves = LeavePlan::where('user_id', $user->id)
+                                     ->where('status', 'rejected')
+                                     ->count();
+
+            $leaveTypes = LeaveType::all();
+
+            return view('settings.leave.calendar', compact(
+                'remainingLeaves',
+                'approvedLeaves',
+                'rejectedLeaves',
+                'pendingLeaves',
+                'events',
+                'leaveTypes',
+                'year',
+                'months',
+                'leaveDays',
+                'holidays'
+            ));
+        } catch (\Exception $e) {
+            \Log::error('Leave Calendar Error:', ['error' => $e->getMessage()]);
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function leaveHistory()
+    {
+        try {
+            $leaveTypes = LeaveType::all();
+            $leavePlans = LeavePlan::where('user_id', auth()->id())
+                ->with('leaveType')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return view('settings.leave.history', compact('leaveTypes', 'leavePlans'));
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    private function getEventColor($status)
+    {
+        return [
+            'approved' => '#4CAF50',
+            'pending' => '#FFC107',
+            'rejected' => '#f44336'
+        ][$status] ?? '#4CAF50';
+    }
+
+    public function leaveSettings()
+    {
+        try {
+            $leaveTypes = LeaveType::all();
+            $leaveQuotas = LeaveQuota::where('user_id', auth()->id())->get();
+            
+            return view('settings.leave.settings', compact('leaveTypes', 'leaveQuotas'));
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function bookLeave() // Changed from createLeave to bookLeave
+    {
+        try {
+            $leaveTypes = LeaveType::all();
+            return view('settings.leave.book', compact('leaveTypes')); // Changed from create to book
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 }
