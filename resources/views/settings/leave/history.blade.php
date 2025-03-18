@@ -29,16 +29,76 @@
                 </div>
                 @endif
 
-                <div class="system-card">
-                    <div class="system-card-header">
-                        <div class="system-card-title">
-                            <h3>Leave History</h3>
+                <!-- Leave History Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-history me-2"></i>
+                            Leave History Overview
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="stats-card bg-primary text-white">
+                                    <div class="stats-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="stats-info">
+                                        <h5>Approved Leaves</h5>
+                                        <h3>{{ $leavePlans->where('status', 'approved')->count() }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card bg-warning text-white">
+                                    <div class="stats-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="stats-info">
+                                        <h5>Pending Leaves</h5>
+                                        <h3>{{ $leavePlans->where('status', 'pending')->count() }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card bg-danger text-white">
+                                    <div class="stats-icon">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                    <div class="stats-info">
+                                        <h5>Rejected Leaves</h5>
+                                        <h3>{{ $leavePlans->where('status', 'rejected')->count() }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card bg-success text-white">
+                                    <div class="stats-icon">
+                                        <i class="fas fa-calendar"></i>
+                                    </div>
+                                    <div class="stats-info">
+                                        <h5>Total Leaves</h5>
+                                        <h3>{{ $leavePlans->count() }}</h3>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="system-card-body">
-                        <div class="table-container">
-                            <table class="leave-table">
-                                <thead>
+                </div>
+
+                <!-- Leave History Table Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            Detailed Leave History
+                        </h4>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
                                     <tr>
                                         <th>Type</th>
                                         <th>Start Date</th>
@@ -53,39 +113,33 @@
                                         <td>
                                             <div class="leave-type">
                                                 @if($leave->leaveType && $leave->leaveType->name)
-                                                    <span class="leave-icon {{ strtolower($leave->leaveType->name) }}">
-                                                        <i class="fas fa-calendar-alt"></i>
+                                                    <span class="leave-badge {{ strtolower($leave->leaveType->name) }}">
+                                                        {{ $leave->leaveType->name }}
                                                     </span>
-                                                    <span class="leave-type-name">{{ $leave->leaveType->name }}</span>
                                                 @else
-                                                    <span class="leave-icon default">
-                                                        <i class="fas fa-calendar-alt"></i>
-                                                    </span>
-                                                    <span class="leave-type-name">N/A</span>
+                                                    <span class="leave-badge default">N/A</span>
                                                 @endif
                                             </div>
                                         </td>
                                         <td>{{ date('d M Y', strtotime($leave->start_date)) }}</td>
                                         <td>{{ date('d M Y', strtotime($leave->end_date)) }}</td>
                                         <td>
-                                            <div class="description-cell">
+                                            <div class="description-cell" title="{{ $leave->description }}">
                                                 {{ $leave->description ?? '-' }}
                                             </div>
                                         </td>
                                         <td>
-                                            <div class="status-badge {{ $leave->status }}">
+                                            <span class="status-pill {{ $leave->status }}">
                                                 {{ ucfirst($leave->status) }}
-                                            </div>
+                                            </span>
                                         </td>
                                     </tr>
                                     @empty
-                                    <tr class="empty-row">
-                                        <td colspan="5">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">
                                             <div class="empty-state">
-                                                <div class="empty-icon">
-                                                    <i class="far fa-calendar-times"></i>
-                                                </div>
-                                                <p>No leave history found</p>
+                                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                                <p class="text-muted">No leave history found</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -102,145 +156,114 @@
 
 @push('styles')
 <style>
-    /* Card Styling */
-    .system-card {
+    /* Card Styles */
+    .card {
         background: #FFFFFF;
-        border: 1px solid #EAECF0;
-        box-shadow: 0px 1px 3px rgba(16, 24, 40, 0.1), 0px 1px 2px rgba(16, 24, 40, 0.06);
         border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(16, 24, 40, 0.1);
+        border: 1px solid #EAECF0;
         margin-bottom: 24px;
-        overflow: hidden;
-        transition: box-shadow 0.3s ease;
     }
 
-    .system-card:hover {
-        box-shadow: 0px 4px 8px rgba(16, 24, 40, 0.15);
-    }
-
-    .system-card-header {
-        padding: 20px 24px;
-        border-bottom: 1px solid #EAECF0;
-        background-color: #FCFCFD;
-    }
-
-    .system-card-title h3 {
-        font-weight: 600;
-        font-size: 18px;
-        line-height: 28px;
-        color: #101828;
-        margin: 0;
-        display: flex;
-        align-items: center;
-    }
-
-    .system-card-title h3:before {
-        content: '';
-        display: inline-block;
-        width: 4px;
-        height: 18px;
-        background: #2E90FA;
-        border-radius: 4px;
-        margin-right: 12px;
-    }
-
-    .system-card-body {
-        padding: 0;
-    }
-
-    /* Table Container */
-    .table-container {
-        width: 100%;
-        overflow-x: auto;
-    }
-
-    /* Table Styling */
-    .leave-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        font-family: 'Inter', sans-serif;
-    }
-
-    .leave-table thead {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-
-    .leave-table th {
-        background: #F9FAFB;
-        padding: 14px 24px;
-        font-weight: 600;
-        font-size: 12px;
-        line-height: 18px;
-        color: #667085;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        text-align: left;
-        border-bottom: 1px solid #EAECF0;
-        white-space: nowrap;
-    }
-
-    .leave-table td {
+    .card-header {
+        background: #FCFCFD;
         padding: 16px 24px;
-        font-size: 14px;
-        line-height: 22px;
-        color: #101828;
         border-bottom: 1px solid #EAECF0;
-        transition: background-color 0.2s ease;
     }
 
-    .leave-table tbody tr {
-        transition: all 0.2s ease;
+    .card-title {
+        color: #101828;
+        font-size: 16px;
+        font-weight: 600;
     }
 
-    .leave-table tbody tr:hover {
-        background-color: #F9FAFB;
-    }
-
-    .leave-table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    /* Leave Type Column Styling */
-    .leave-type {
+    /* Stats Card Styles */
+    .stats-card {
+        border-radius: 12px;
+        padding: 20px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 16px;
     }
 
-    .leave-icon {
+    .stats-icon {
+        font-size: 24px;
+        width: 48px;
+        height: 48px;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        color: white;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
     }
 
-    .leave-icon.annual {
-        background-color: #2E90FA;
+    .stats-info h5 {
+        font-size: 14px;
+        margin: 0;
+        opacity: 0.9;
     }
 
-    .leave-icon.sick {
-        background-color: #F04438;
+    .stats-info h3 {
+        font-size: 24px;
+        margin: 4px 0 0;
+        font-weight: 600;
     }
 
-    .leave-icon.personal {
-        background-color: #7F56D9;
+    /* Table Styles */
+    .table {
+        margin: 0;
     }
 
-    .leave-icon.unpaid {
-        background-color: #F79009;
+    .table th {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #667085;
+        background-color: #F9FAFB;
+        padding: 12px 24px;
     }
 
-    .leave-icon.default {
-        background-color: #98A2B3;
+    .table td {
+        padding: 16px 24px;
+        vertical-align: middle;
     }
 
-    .leave-type-name {
+    /* Leave Badge Styles */
+    .leave-badge {
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 12px;
         font-weight: 500;
+        display: inline-block;
+    }
+
+    .leave-badge.annual { background: #EFF8FF; color: #175CD3; }
+    .leave-badge.sick { background: #FEF3F2; color: #B42318; }
+    .leave-badge.personal { background: #F9F5FF; color: #6941C6; }
+    .leave-badge.default { background: #F2F4F7; color: #344054; }
+
+    /* Status Pill Styles */
+    .status-pill {
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-pill.approved {
+        background: #ECFDF3;
+        color: #027A48;
+    }
+
+    .status-pill.pending {
+        background: #FFFAEB;
+        color: #B54708;
+    }
+
+    .status-pill.rejected {
+        background: #FEF3F2;
+        color: #B42318;
     }
 
     /* Description Cell */
@@ -251,123 +274,22 @@
         text-overflow: ellipsis;
     }
 
-    /* Status Badge Styling */
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 10px;
-        border-radius: 16px;
-        font-size: 12px;
-        line-height: 18px;
-        font-weight: 500;
-    }
-
-    .status-badge.approved {
-        background: #ECFDF3;
-        color: #027A48;
-    }
-
-    .status-badge.approved:before {
-        content: '';
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        background-color: #12B76A;
-        border-radius: 50%;
-        margin-right: 6px;
-    }
-
-    .status-badge.pending {
-        background: #FFFAEB;
-        color: #B54708;
-    }
-
-    .status-badge.pending:before {
-        content: '';
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        background-color: #F79009;
-        border-radius: 50%;
-        margin-right: 6px;
-    }
-
-    .status-badge.rejected {
-        background: #FEF3F2;
-        color: #B42318;
-    }
-
-    .status-badge.rejected:before {
-        content: '';
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        background-color: #F04438;
-        border-radius: 50%;
-        margin-right: 6px;
-    }
-
-    /* Empty State Styling */
+    /* Empty State */
     .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 40px 0;
+        text-align: center;
         color: #667085;
-    }
-
-    .empty-icon {
-        font-size: 48px;
-        color: #D0D5DD;
-        margin-bottom: 16px;
-    }
-
-    .empty-state p {
-        font-size: 14px;
-        margin: 0;
     }
 
     /* Responsive Adjustments */
     @media (max-width: 768px) {
-        .system-card-header {
-            padding: 16px;
+        .stats-card {
+            margin-bottom: 16px;
         }
-
-        .leave-table th,
-        .leave-table td {
-            padding: 12px 16px;
-        }
-
-        .description-cell {
-            max-width: 150px;
+        
+        .table-responsive {
+            border-radius: 12px;
         }
     }
 </style>
-@endpush
-
-@push('scripts')
-<script>
-    // Optional: Add interactivity if needed
-    document.addEventListener('DOMContentLoaded', function() {
-        const rows = document.querySelectorAll('.leave-table tbody tr:not(.empty-row)');
-        
-        rows.forEach(row => {
-            // Show full description on hover/click for small screens
-            const descCell = row.querySelector('.description-cell');
-            if (descCell) {
-                descCell.addEventListener('click', function() {
-                    if (this.classList.contains('expanded')) {
-                        this.classList.remove('expanded');
-                        this.style.whiteSpace = 'nowrap';
-                    } else {
-                        this.classList.add('expanded');
-                        this.style.whiteSpace = 'normal';
-                    }
-                });
-            }
-        });
-    });
-</script>
 @endpush
 @endsection

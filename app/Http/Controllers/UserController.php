@@ -191,9 +191,11 @@ class UserController extends Controller
 
     public function getDetails(User $user)
     {
+        $user->load(['profile.jobTitle', 'profile.department', 'role', 'workingHours']);
+        
         return response()->json([
             'success' => true,
-            'user' => $user->load('profile.jobTitle')
+            'user' => $user
         ]);
     }
 
@@ -371,17 +373,24 @@ class UserController extends Controller
                 'name' => 'required|string|max:255',
                 'department_id' => 'required|exists:departments,id',
                 'job_title_id' => 'required|exists:job_titles,id',
-                'pay_per_hour' => 'nullable|numeric|min:0', // Add validation for pay_per_hour
+                'pay_per_hour' => 'nullable|numeric|min:0',
+                'daily_capacity' => 'required|numeric|min:0|max:24',
+                'role' => 'required|exists:roles,id'
             ]);
 
-            // Update profile
+            // Update or create profile
             $profile = $user->profile ?? $user->profile()->create([]);
-            $profile->update([
+            $profile->fill([
                 'name' => $validated['name'],
                 'department_id' => $validated['department_id'],
                 'job_title_id' => $validated['job_title_id'],
-                'pay_per_hour' => $validated['pay_per_hour'], // Add this line to update pay_per_hour
-            ]);
+                'pay_per_hour' => $validated['pay_per_hour'],
+                'daily_capacity' => $validated['daily_capacity'],
+            ])->save();
+
+            // Update role
+            $user->role_id = $validated['role'];
+            $user->save();
 
             // Delete existing working hours
             $user->workingHours()->delete();
@@ -470,6 +479,7 @@ class UserController extends Controller
     {
         $users = User::with(['profile.jobTitle', 'role'])->get();
         $leavePlans = DB::table('leave_plans')->get();
+        $selectedUser = $user; // Add this line
         $detailUser = [
             'name' => $user->profile->name ?? $user->email,
             'email' => $user->email,
@@ -478,7 +488,12 @@ class UserController extends Controller
                 asset('images/change-photo.svg')
         ];
         
-        return view('users', compact('users', 'leavePlans', 'detailUser'));
+        return view('users', compact(
+            'users', 
+            'leavePlans', 
+            'detailUser',
+            'selectedUser' // Add this
+        ));
     }
 
     public function leaveHistory()

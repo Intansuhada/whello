@@ -9,6 +9,7 @@ use App\Models\WorkingDay;
 use App\Models\LeaveType;
 use App\Models\LeavePlan;
 use App\Models\CompanyHoliday;
+use App\Models\AppSetting; // Add this line
 use Carbon\Carbon;
 use App\Models\TimezoneSetting;
 use Illuminate\Support\Facades\Storage;
@@ -40,12 +41,14 @@ class SystemSettingsController extends Controller
         $leaveTypes = LeaveType::all();
         $companyHolidays = CompanyHoliday::all();
         $currentTimezone = TimezoneSetting::getActiveTimezone();
+        $currentFirstDay = AppSetting::getSetting('first_day_of_week', 'monday');
         
         return view('settings.system.working-day', compact(
             'workingDays', 
             'leaveTypes', 
             'companyHolidays',
-            'currentTimezone'
+            'currentTimezone',
+            'currentFirstDay'
         ));
     }
 
@@ -118,6 +121,11 @@ class SystemSettingsController extends Controller
         try {
             DB::beginTransaction();
             
+            // Update first day of week if provided
+            if ($request->has('first_day')) {
+                AppSetting::setSetting('first_day_of_week', $request->first_day);
+            }
+
             // Debug log untuk melihat data yang diterima
             \Log::info('Received working days data:', $request->all());
 
@@ -154,10 +162,10 @@ class SystemSettingsController extends Controller
             }
 
             DB::commit();
-            return redirect()->back()->with('success', 'Working days and timezone updated successfully');
+            return redirect()->back()->with('success', 'Settings updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Failed to update working days: ' . $e->getMessage());
+            \Log::error('Failed to update settings: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to update settings: ' . $e->getMessage());
         }
     }
@@ -183,13 +191,18 @@ class SystemSettingsController extends Controller
                 'url_slug' => 'required|string|max:255',
                 'owner_email' => 'required|email',
                 'team_members' => 'required|integer',
-                'timezone' => 'required|string',
+                'timezone' => 'required|string|timezone', // Add timezone validation
                 'time_format' => 'required|in:12,24',
                 'date_format' => 'nullable|string',
                 'default_language' => 'required|string',
                 'default_currency' => 'required|string',
                 'default_hourly_rate' => 'nullable|numeric',
             ]);
+
+            // Ensure timezone is valid
+            if (!in_array($validated['timezone'], timezone_identifiers_list())) {
+                $validated['timezone'] = 'Asia/Jakarta'; // Fallback to default
+            }
 
             // Handle logo upload if present
             if ($request->hasFile('logo')) {

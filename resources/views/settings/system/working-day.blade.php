@@ -108,44 +108,25 @@
                         </x-setting-card>
                     </div>
 
-                    <!-- Timezone Settings -->
+                    <!-- First Day of the Week Settings -->
                     <div class="settings-block mb-5">
                         <x-setting-card>
                             <div class="settings-header">
-                                <h3>Timezone Settings</h3>
-                                <p class="text-muted">Set your organization's timezone.</p>
-                                @if($currentTimezone)
-                                <div class="current-timezone-info">
-                                    <span class="badge bg-success">Active Timezone: {{ $currentTimezone }}</span>
+                                <h3>First Day of the Week</h3>
+                                <p class="text-muted mb-4">Set the first day of the week for your organization.</p> <!-- Added mb-4 class -->
+                                @if(isset($currentFirstDay))
+                                <div class="current-weekday-info">
+                                    <span class="badge bg-success">Active First Day: {{ ucfirst($currentFirstDay ?? 'monday') }}</span>
                                 </div>
                                 @endif
                             </div>
                             <div class="settings-body">
                                 <div class="form-group">
-                                    <label for="timezone" class="form-label">Select Timezone</label>
-                                    <select name="timezone" id="timezone" class="form-select mb-4">
-                                        @foreach(timezone_identifiers_list() as $timezone)
-                                            <option value="{{ $timezone }}" {{ $currentTimezone === $timezone ? 'selected' : '' }}>
-                                                {{ $timezone }}
-                                            </option>
-                                        @endforeach
+                                    <label for="first_day" class="form-label">Select First Day</label>
+                                    <select name="first_day" id="first_day" class="form-select mb-4">
+                                        <option value="sunday" {{ ($currentFirstDay ?? '') === 'sunday' ? 'selected' : '' }}>Sunday</option>
+                                        <option value="monday" {{ ($currentFirstDay ?? '') === 'monday' ? 'selected' : '' }}>Monday</option>
                                     </select>
-                                    
-                                    @if($currentTimezone)
-                                        <div class="timezone-info mt-4">
-                                            <label class="form-label text-muted mb-2">Current Time Information</label>
-                                            <div class="timezone-details ms-0">
-                                                <p class="mb-2 d-flex align-items-center">
-                                                    <i class="fas fa-clock me-2"></i>
-                                                    <span>Current Time: {{ now()->timezone($currentTimezone)->format('H:i:s') }}</span>
-                                                </p>
-                                                <p class="mb-0 d-flex align-items-center">
-                                                    <i class="fas fa-calendar me-2"></i>
-                                                    <span>Current Date: {{ now()->timezone($currentTimezone)->format('Y-m-d') }}</span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    @endif
                                 </div>
                             </div>
                             <div class="settings-actions">
@@ -154,6 +135,7 @@
                             </div>
                         </x-setting-card>
                     </div>
+
 
                     <!-- Leave Types -->
                     <div class="settings-block mb-5">
@@ -1597,6 +1579,21 @@ function confirmDeleteLeaveType(e) {
 
 .time-input {
     width: 100%;
+}
+
+/* Update spacing for first day section */
+.settings-header p.text-muted {
+    margin-bottom: 1.5rem; /* Increased bottom margin for description */
+}
+
+.current-weekday-info {
+    margin-top: 1rem;    /* Add top margin */
+    margin-bottom: 1rem; /* Add bottom margin */
+}
+
+.badge {
+    padding: 0.75rem 1.25rem; /* Increased padding */
+    display: inline-block;
 }
 </style>
 @endsection

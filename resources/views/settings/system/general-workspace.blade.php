@@ -123,12 +123,45 @@
                                                 <tr>
                                                     <td>Time Zone</td>
                                                     <td>
-                                                        <select name="timezone" class="form-control">
-                                                            <option value="UTC+07:00" {{ ($workspaceSettings->timezone ?? '') == 'UTC+07:00' ? 'selected' : '' }}>Bangkok, Hanoi, Jakarta (UTC+07:00)</option>
-                                                            <!-- Add more timezone options as needed -->
-                                                        </select>
+                                                        <div class="settings-body">
+                                                            <div class="form-group">
+                                                                @php
+                                                                    // Ambil timezone dari setting, jika tidak valid, fallback ke Asia/Jakarta
+                                                                    $currentTimezone = $workspaceSettings->timezone ?? 'Asia/Jakarta';
+                                                                    $validTimezones = timezone_identifiers_list();
+                                                                    if (!in_array($currentTimezone, $validTimezones)) {
+                                                                        $currentTimezone = 'Asia/Jakarta';
+                                                                    }
+                                                                @endphp
+                                                                
+                                                                <select name="timezone" id="timezone" class="form-control mb-4">
+                                                                    @foreach($validTimezones as $timezone)
+                                                                        <option value="{{ $timezone }}" {{ $currentTimezone == $timezone ? 'selected' : '' }}>
+                                                                            {{ $timezone }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                                
+                                                                @if($currentTimezone)
+                                                                    <div class="timezone-info mt-4">
+                                                                        <label class="form-label text-muted mb-2">Current Time Information</label>
+                                                                        <div class="timezone-details ms-0">
+                                                                            <p class="mb-2 d-flex align-items-center">
+                                                                                <i class="fas fa-clock me-2"></i>
+                                                                                <span>Current Time: {{ now()->timezone($currentTimezone)->format('H:i:s') }}</span>
+                                                                            </p>
+                                                                            <p class="mb-0 d-flex align-items-center">
+                                                                                <i class="fas fa-calendar me-2"></i>
+                                                                                <span>Current Date: {{ now()->timezone($currentTimezone)->format('Y-m-d') }}</span>
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        </div>
                                                     </td>
                                                 </tr>
+                                                
                                                 <tr>
                                                     <td>Time Format</td>
                                                     <td>
@@ -139,23 +172,79 @@
                                                     </td>
                                                 </tr>
                                                 <tr>
+                                                    <td>Date Format</td>
+                                                    <td>
+                                                        <select name="date_format" class="form-control">
+                                                            <option value="d-m-Y" {{ ($workspaceSettings->date_format ?? '') == 'd-m-Y' ? 'selected' : '' }}>DD-MM-YYYY</option>
+                                                            <option value="m-d-Y" {{ ($workspaceSettings->date_format ?? '') == 'm-d-Y' ? 'selected' : '' }}>MM-DD-YYYY</option>
+                                                            <option value="Y-m-d" {{ ($workspaceSettings->date_format ?? '') == 'Y-m-d' ? 'selected' : '' }}>YYYY-MM-DD</option>
+                                                            <option value="d/m/Y" {{ ($workspaceSettings->date_format ?? '') == 'd/m/Y' ? 'selected' : '' }}>DD/MM/YYYY</option>
+                                                            <option value="m/d/Y" {{ ($workspaceSettings->date_format ?? '') == 'm/d/Y' ? 'selected' : '' }}>MM/DD/YYYY</option>
+                                                            <option value="Y/m/d" {{ ($workspaceSettings->date_format ?? '') == 'Y/m/d' ? 'selected' : '' }}>YYYY/MM/DD</option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                                
+                                                <tr>
                                                     <td>Default Language</td>
                                                     <td>
                                                         <select name="default_language" class="form-control">
                                                             <option value="en" {{ ($workspaceSettings->default_language ?? '') == 'en' ? 'selected' : '' }}>English</option>
-                                                            <!-- Add more language options -->
+                                                            <option value="id" {{ ($workspaceSettings->default_language ?? '') == 'id' ? 'selected' : '' }}>Bahasa Indonesia</option>
+                                                            <option value="fr" {{ ($workspaceSettings->default_language ?? '') == 'fr' ? 'selected' : '' }}>Français (French)</option>
+                                                            <option value="de" {{ ($workspaceSettings->default_language ?? '') == 'de' ? 'selected' : '' }}>Deutsch (German)</option>
+                                                            <option value="es" {{ ($workspaceSettings->default_language ?? '') == 'es' ? 'selected' : '' }}>Español (Spanish)</option>
+                                                            <option value="it" {{ ($workspaceSettings->default_language ?? '') == 'it' ? 'selected' : '' }}>Italiano (Italian)</option>
+                                                            <option value="pt" {{ ($workspaceSettings->default_language ?? '') == 'pt' ? 'selected' : '' }}>Português (Portuguese)</option>
+                                                            <option value="ru" {{ ($workspaceSettings->default_language ?? '') == 'ru' ? 'selected' : '' }}>Русский (Russian)</option>
+                                                            <option value="zh" {{ ($workspaceSettings->default_language ?? '') == 'zh' ? 'selected' : '' }}>中文 (Chinese)</option>
+                                                            <option value="ja" {{ ($workspaceSettings->default_language ?? '') == 'ja' ? 'selected' : '' }}>日本語 (Japanese)</option>
+                                                            <option value="ko" {{ ($workspaceSettings->default_language ?? '') == 'ko' ? 'selected' : '' }}>한국어 (Korean)</option>
+                                                            <option value="ar" {{ ($workspaceSettings->default_language ?? '') == 'ar' ? 'selected' : '' }}>العربية (Arabic)</option>
+                                                            <option value="hi" {{ ($workspaceSettings->default_language ?? '') == 'hi' ? 'selected' : '' }}>हिन्दी (Hindi)</option>
+                                                            <option value="th" {{ ($workspaceSettings->default_language ?? '') == 'th' ? 'selected' : '' }}>ไทย (Thai)</option>
+                                                            <option value="tr" {{ ($workspaceSettings->default_language ?? '') == 'tr' ? 'selected' : '' }}>Türkçe (Turkish)</option>
+                                                            <option value="nl" {{ ($workspaceSettings->default_language ?? '') == 'nl' ? 'selected' : '' }}>Nederlands (Dutch)</option>
+                                                            <option value="pl" {{ ($workspaceSettings->default_language ?? '') == 'pl' ? 'selected' : '' }}>Polski (Polish)</option>
+                                                            <option value="sv" {{ ($workspaceSettings->default_language ?? '') == 'sv' ? 'selected' : '' }}>Svenska (Swedish)</option>
+                                                            <option value="fi" {{ ($workspaceSettings->default_language ?? '') == 'fi' ? 'selected' : '' }}>Suomi (Finnish)</option>
+                                                            <option value="no" {{ ($workspaceSettings->default_language ?? '') == 'no' ? 'selected' : '' }}>Norsk (Norwegian)</option>
+                                                            <option value="da" {{ ($workspaceSettings->default_language ?? '') == 'da' ? 'selected' : '' }}>Dansk (Danish)</option>
+                                                            <option value="vi" {{ ($workspaceSettings->default_language ?? '') == 'vi' ? 'selected' : '' }}>Tiếng Việt (Vietnamese)</option>
                                                         </select>
                                                     </td>
                                                 </tr>
+                                                
                                                 <tr>
                                                     <td>Default Currency</td>
                                                     <td>
                                                         <select name="default_currency" class="form-control">
                                                             <option value="IDR" {{ ($workspaceSettings->default_currency ?? '') == 'IDR' ? 'selected' : '' }}>Indonesia - IDR / Rupiah</option>
-                                                            <!-- Add more currency options -->
+                                                            <option value="USD" {{ ($workspaceSettings->default_currency ?? '') == 'USD' ? 'selected' : '' }}>United States - USD / Dollar</option>
+                                                            <option value="EUR" {{ ($workspaceSettings->default_currency ?? '') == 'EUR' ? 'selected' : '' }}>Eurozone - EUR / Euro</option>
+                                                            <option value="GBP" {{ ($workspaceSettings->default_currency ?? '') == 'GBP' ? 'selected' : '' }}>United Kingdom - GBP / Pound Sterling</option>
+                                                            <option value="JPY" {{ ($workspaceSettings->default_currency ?? '') == 'JPY' ? 'selected' : '' }}>Japan - JPY / Yen</option>
+                                                            <option value="CNY" {{ ($workspaceSettings->default_currency ?? '') == 'CNY' ? 'selected' : '' }}>China - CNY / Yuan</option>
+                                                            <option value="SGD" {{ ($workspaceSettings->default_currency ?? '') == 'SGD' ? 'selected' : '' }}>Singapore - SGD / Dollar</option>
+                                                            <option value="MYR" {{ ($workspaceSettings->default_currency ?? '') == 'MYR' ? 'selected' : '' }}>Malaysia - MYR / Ringgit</option>
+                                                            <option value="THB" {{ ($workspaceSettings->default_currency ?? '') == 'THB' ? 'selected' : '' }}>Thailand - THB / Baht</option>
+                                                            <option value="KRW" {{ ($workspaceSettings->default_currency ?? '') == 'KRW' ? 'selected' : '' }}>South Korea - KRW / Won</option>
+                                                            <option value="INR" {{ ($workspaceSettings->default_currency ?? '') == 'INR' ? 'selected' : '' }}>India - INR / Rupee</option>
+                                                            <option value="AUD" {{ ($workspaceSettings->default_currency ?? '') == 'AUD' ? 'selected' : '' }}>Australia - AUD / Dollar</option>
+                                                            <option value="CAD" {{ ($workspaceSettings->default_currency ?? '') == 'CAD' ? 'selected' : '' }}>Canada - CAD / Dollar</option>
+                                                            <option value="NZD" {{ ($workspaceSettings->default_currency ?? '') == 'NZD' ? 'selected' : '' }}>New Zealand - NZD / Dollar</option>
+                                                            <option value="CHF" {{ ($workspaceSettings->default_currency ?? '') == 'CHF' ? 'selected' : '' }}>Switzerland - CHF / Franc</option>
+                                                            <option value="HKD" {{ ($workspaceSettings->default_currency ?? '') == 'HKD' ? 'selected' : '' }}>Hong Kong - HKD / Dollar</option>
+                                                            <option value="SAR" {{ ($workspaceSettings->default_currency ?? '') == 'SAR' ? 'selected' : '' }}>Saudi Arabia - SAR / Riyal</option>
+                                                            <option value="AED" {{ ($workspaceSettings->default_currency ?? '') == 'AED' ? 'selected' : '' }}>UAE - AED / Dirham</option>
+                                                            <option value="BRL" {{ ($workspaceSettings->default_currency ?? '') == 'BRL' ? 'selected' : '' }}>Brazil - BRL / Real</option>
+                                                            <option value="ZAR" {{ ($workspaceSettings->default_currency ?? '') == 'ZAR' ? 'selected' : '' }}>South Africa - ZAR / Rand</option>
+                                                            <option value="RUB" {{ ($workspaceSettings->default_currency ?? '') == 'RUB' ? 'selected' : '' }}>Russia - RUB / Ruble</option>
+                                                            <option value="MXN" {{ ($workspaceSettings->default_currency ?? '') == 'MXN' ? 'selected' : '' }}>Mexico - MXN / Peso</option>
                                                         </select>
                                                     </td>
                                                 </tr>
+                                                
                                                 <tr>
                                                     <td>Default Company Hourly Rate</td>
                                                     <td>

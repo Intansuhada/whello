@@ -75,7 +75,14 @@
                                         </div>
                                         <div class="detail-text">
                                             <span class="detail-name" id="detail-name">{{ isset($selectedUser) ? ($selectedUser->profile ? $selectedUser->profile->name : $selectedUser->email) : '' }}</span>
-                                            <span class="detail-email" id="detail-id">{{ isset($selectedUser) ? $selectedUser->email : '' }}</span>
+
+                                            <div class="detail-info">
+                                                
+                                                <span class="detail-email" id="detail-id">{{ isset($selectedUser) ? $selectedUser->email : '' }}</span>
+                                                <span class="detail-job">{{ isset($selectedUser) ? ($selectedUser->profile?->jobTitle?->name ?? 'No Position') : '' }}</span>
+                                                <span class="detail-info">Rp{{ number_format(isset($selectedUser) ? ($selectedUser->profile?->pay_per_hour ?? 0) : 0, 0, ',', '.') }}/hours</span>
+                                                <span class="detail-info">{{ isset($selectedUser) ? ($selectedUser->profile?->daily_capacity ?? 0) : 0 }} hours/day</span>
+                                            </div>
                                         </div>
                                     </div>
                                     
@@ -187,6 +194,17 @@
                                                 <span class="error">{{ $message }}</span>
                                             @enderror
                                         </div>
+                                         <!-- Daily Capacity -->
+                                         <div class="form-group">
+                                            <label for="daily_capacity">Daily Capacity (Hours)</label>
+                                            <input type="number" id="daily_capacity" name="daily_capacity" 
+                                                value="{{ old('daily_capacity', $selectedUser->profile->daily_capacity ?? '') }}" 
+                                                min="0" step="0.1" required>
+                                            @error('daily_capacity')
+                                                <span class="error">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+
 
                                         <!-- Working Days Section -->
                                         <div class="form-working-day">
@@ -1241,6 +1259,23 @@
 }
 
 /* ...existing styles... */
+.detail-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #718096;
+    font-size: 14px;
+}
+
+.detail-separator {
+    color: #CBD5E0;
+}
+
+.detail-job {
+    color: #4A5568;
+    font-weight: 500;
+}
+// ...existing styles...
 </style>
 
 @push('scripts')
@@ -1671,7 +1706,3 @@ async function updateLeaveStatus(select, leaveId) {
     }
 }
 </script>
-
-
-
-

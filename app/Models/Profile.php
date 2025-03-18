@@ -38,7 +38,8 @@ class Profile extends Model
         'job_title_id',
         'name',
         'pay_per_hour',
-        'avatar'
+        'avatar',
+        'daily_capacity'
     ];
 
     // Tambahkan casting jika diperlukan

@@ -26,4 +26,13 @@ class WorkspaceSetting extends Model
         'default_currency',
         'default_hourly_rate',
     ];
+
+    protected $attributes = [
+        'timezone' => 'Asia/Jakarta', // Set default timezone
+    ];
+
+    public function getTimezoneAttribute($value)
+    {
+        return $value ?: 'Asia/Jakarta';
+    }
 }
