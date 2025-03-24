@@ -111,6 +111,79 @@
                         <textarea class="form-control" name="about" rows="4">{{ $user->profile?->about }}</textarea>
                     </div>
                 </div>
+
+                <!-- Working Days Section -->
+                <div class="settings-item">
+                    <div class="settings-header">
+                        <h3>Working Days</h3>
+                        <p class="text-muted">Set your regular working schedule. Weekends are set as off days by default.</p>
+                    </div>
+                    <div class="settings-input">
+                        <div class="working-days-container">
+                            <div class="working-days-header">
+                                <div class="header-day">Work Days</div>
+                                <div class="header-time">Working Hours</div>
+                            </div>
+
+                            @php
+                                $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                            @endphp
+
+                            @foreach($days as $day)
+                                @php
+                                    $workingHour = $user->workingHours->where('day', $day)->first();
+                                    $isActive = $workingHour ? $workingHour->is_active : false;
+                                @endphp
+                                
+                                <div class="working-day-row" id="row-{{ $day }}">
+                                    <div class="day-selector">
+                                        <label class="day-label">
+                                            <input type="checkbox" 
+                                                id="checkbox-{{ $day }}" 
+                                                name="working_days[{{ $day }}]" 
+                                                class="day-checkbox"
+                                                {{ $isActive ? 'checked' : '' }}
+                                                onchange="toggleWorkingHours('{{ $day }}')">
+                                            <span class="day-name">{{ ucfirst($day) }}</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="time-slots" id="times-{{ $day }}">
+                                        <div class="working-hours {{ $isActive ? '' : 'hidden' }}">
+                                            <div class="time-slot">
+                                                <input type="time" 
+                                                    name="morning_start[{{ $day }}]" 
+                                                    class="time-input" 
+                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_start)->format('H:i') : '08:00' }}"
+                                                    {{ $isActive ? '' : 'disabled' }}>
+                                                <span>to</span>
+                                                <input type="time" 
+                                                    name="morning_end[{{ $day }}]" 
+                                                    class="time-input" 
+                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_end)->format('H:i') : '12:00' }}"
+                                                    {{ $isActive ? '' : 'disabled' }}>
+                                            </div>
+                                            <div class="time-slot">
+                                                <input type="time" 
+                                                    name="afternoon_start[{{ $day }}]" 
+                                                    class="time-input" 
+                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_start)->format('H:i') : '13:00' }}"
+                                                    {{ $isActive ? '' : 'disabled' }}>
+                                                <span>to</span>
+                                                <input type="time" 
+                                                    name="afternoon_end[{{ $day }}]" 
+                                                    class="time-input" 
+                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_end)->format('H:i') : '17:00' }}"
+                                                    {{ $isActive ? '' : 'disabled' }}>
+                                            </div>
+                                        </div>
+                                        <div class="off-day-message {{ $isActive ? 'hidden' : '' }}">Off Day</div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -507,6 +580,80 @@ select.form-control:focus {
     position: absolute;
     left: -9999px;
 }
+
+/* Working Days Styles */
+.working-days-container {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100%; /* Tambahkan ini */
+}
+
+.working-days-header {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    background-color: #f8fafc;
+    padding: 12px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+    color: #4a5568;
+    width: 100%; /* Tambahkan ini */
+}
+
+.working-day-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    padding: 12px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    align-items: center;
+    width: 100%; /* Tambahkan ini */
+}
+
+/* Update time slots layout */
+.time-slots {
+    display: flex;
+    gap: 20px;
+    width: 100%; /* Tambahkan ini */
+    justify-content: flex-start; /* Tambahkan ini */
+}
+
+.working-hours {
+    display: flex;
+    gap: 40px; /* Perbesar gap */
+    width: 100%; /* Tambahkan ini */
+}
+
+.time-slot {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Perbesar gap */
+    min-width: 240px; /* Tambahkan minimum width */
+}
+
+.time-input {
+    padding: 4px 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    width: 110px; /* Perlebar sedikit */
+}
+
+/* Tambahkan style untuk span 'to' */
+.time-slot span {
+    color: #64748b;
+    font-size: 14px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.off-day-message {
+    color: #a0aec0;
+    font-style: italic;
+    padding-left: 4px; /* Tambahkan padding */
+}
+
+.hidden {
+    display: none;
+}
 </style>
 
 <script>
@@ -608,6 +755,35 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             showAlert('Gagal menghapus foto profil', 'danger');
+        }
+    });
+});
+
+function toggleWorkingHours(day) {
+    const checkbox = document.getElementById(`checkbox-${day}`);
+    const timesContainer = document.getElementById(`times-${day}`);
+    const workingHours = timesContainer.querySelector('.working-hours');
+    const offDayMessage = timesContainer.querySelector('.off-day-message');
+    const timeInputs = timesContainer.querySelectorAll('input[type="time"]');
+    
+    if (checkbox.checked) {
+        workingHours.classList.remove('hidden');
+        offDayMessage.classList.add('hidden');
+        timeInputs.forEach(input => input.disabled = false);
+    } else {
+        workingHours.classList.add('hidden');
+        offDayMessage.classList.remove('hidden');
+        timeInputs.forEach(input => input.disabled = true);
+    }
+}
+
+// Initialize working hours state on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    days.forEach(day => {
+        const checkbox = document.getElementById(`checkbox-${day}`);
+        if (checkbox) {
+            toggleWorkingHours(day);
         }
     });
 });

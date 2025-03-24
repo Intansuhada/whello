@@ -224,63 +224,68 @@
                                         <!-- Working Days Section -->
                                         <div class="form-working-day">
                                             <p><strong>Default Working Days & Hours </strong></p>
-                                            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+                                            <p class="text-muted">Set your regular working schedule. Choose which days are working days.</p>
                                         </div>
                 
                                         <div class="working-days-container">
                                             <div class="working-days-header">
-                                                <div class="header-day">Day</                                                <div class="header-morning">Morning</div>
-                                                <div class="header-afternoon">Afternoon</div>
+                                                <div class="header-day">Work Days</div>
+                                                <div class="header-time">Working Hours</div>
                                             </div>
                 
                                             @php
-                                                $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                                                $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
                                             @endphp
                 
                                             @foreach($days as $day)
                                                 @php
                                                     $workingHour = $selectedUser->workingHours->where('day', $day)->first();
                                                     $isActive = $workingHour ? $workingHour->is_active : false;
-                                                    $isWeekend = in_array($day, ['saturday', 'sunday']);
                                                 @endphp
                                                 
-                                                <div class="working-day-row {{ $isWeekend ? 'weekend' : '' }}">
+                                                <div class="working-day-row" id="row-{{ $day }}">
                                                     <div class="day-selector">
-                                                        <input type="checkbox" 
-                                                            id="{{ $day }}" 
-                                                            name="working_days[{{ $day }}]" 
-                                                            class="round-checkbox"
-                                                            {{ $isWeekend ? 'disabled' : ($isActive ? 'checked' : '') }}>
-                                                        <label for="{{ $day }}">{{ ucfirst($day) }}</label>
+                                                        <label class="day-label">
+                                                            <input type="checkbox" 
+                                                                id="checkbox-{{ $day }}" 
+                                                                name="working_days[{{ $day }}]" 
+                                                                class="day-checkbox"
+                                                                {{ $isActive ? 'checked' : '' }}
+                                                                onchange="toggleWorkingHours('{{ $day }}')">
+                                                            <span class="day-name">{{ ucfirst($day) }}</span>
+                                                        </label>
                                                     </div>
                                                     
-                                                    <div class="day-hours">
-                                                        @if($isWeekend)
-                                                            <div class="off-day-message">Off Day</div>
-                                                        @else
-                                                            <div class="morning-hours">
+                                                    <div class="time-slots" id="times-{{ $day }}">
+                                                        <div class="working-hours {{ $isActive ? '' : 'hidden' }}">
+                                                            <div class="time-slot">
                                                                 <input type="time" 
                                                                     name="morning_start[{{ $day }}]" 
                                                                     class="time-input" 
-                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_start)->format('H:i') : '08:00' }}">
+                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_start)->format('H:i') : '08:00' }}"
+                                                                    {{ $isActive ? '' : 'disabled' }}>
                                                                 <span>to</span>
                                                                 <input type="time" 
                                                                     name="morning_end[{{ $day }}]" 
                                                                     class="time-input" 
-                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_end)->format('H:i') : '12:00' }}">
+                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_end)->format('H:i') : '12:00' }}"
+                                                                    {{ $isActive ? '' : 'disabled' }}>
                                                             </div>
-                                                            <div class="afternoon-hours">
+                                                            <div class="time-slot">
                                                                 <input type="time" 
                                                                     name="afternoon_start[{{ $day }}]" 
                                                                     class="time-input" 
-                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_start)->format('H:i') : '13:00' }}">
+                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_start)->format('H:i') : '13:00' }}"
+                                                                    {{ $isActive ? '' : 'disabled' }}>
                                                                 <span>to</span>
                                                                 <input type="time" 
                                                                     name="afternoon_end[{{ $day }}]" 
                                                                     class="time-input" 
-                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_end)->format('H:i') : '17:00' }}">
+                                                                    value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_end)->format('H:i') : '17:00' }}"
+                                                                    {{ $isActive ? '' : 'disabled' }}>
                                                             </div>
-                                                        @endif
+                                                        </div>
+                                                        <div class="off-day-message {{ $isActive ? 'hidden' : '' }}">Off Day</div>
                                                     </div>
                                                 </div>
                                             @endforeach
@@ -906,18 +911,6 @@
     padding: 24px;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.edit-form-header {
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #E2E8F0;
-}
-
-.edit-form-header h3 {
-    font-size: 18px;
-    color: #2D3748;
-    font-weight: 600;
 }
 
 .form-group {
@@ -2059,64 +2052,68 @@ async function updateLeaveStatus(select, leaveId) {
                 <!-- Working Days Section -->
                 <div class="form-working-day">
                     <p><strong>Default Working Days & Hours </strong></p>
-                    <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+                    <p class="text-muted">Set your regular working schedule. Choose which days are working days.</p>
                 </div>
 
                 <div class="working-days-container">
                     <div class="working-days-header">
-                        <div class="header-day">Day</div>
-                        <div class="header-morning">Morning</div>
-                        <div class="header-afternoon">Afternoon</div>
+                        <div class="header-day">Work Days</div>
+                        <div class="header-time">Working Hours</div>
                     </div>
 
                     @php
-                        $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
                     @endphp
 
                     @foreach($days as $day)
                         @php
                             $workingHour = $selectedUser->workingHours->where('day', $day)->first();
                             $isActive = $workingHour ? $workingHour->is_active : false;
-                            $isWeekend = in_array($day, ['saturday', 'sunday']);
                         @endphp
                         
-                        <div class="working-day-row {{ $isWeekend ? 'weekend' : '' }}">
+                        <div class="working-day-row" id="row-{{ $day }}">
                             <div class="day-selector">
-                                <input type="checkbox" 
-                                    id="{{ $day }}" 
-                                    name="working_days[{{ $day }}]" 
-                                    class="round-checkbox"
-                                    {{ $isWeekend ? 'disabled' : ($isActive ? 'checked' : '') }}>
-                                <label for="{{ $day }}">{{ ucfirst($day) }}</label>
+                                <label class="day-label">
+                                    <input type="checkbox" 
+                                        id="checkbox-{{ $day }}" 
+                                        name="working_days[{{ $day }}]" 
+                                        class="day-checkbox"
+                                        {{ $isActive ? 'checked' : '' }}
+                                        onchange="toggleWorkingHours('{{ $day }}')">
+                                    <span class="day-name">{{ ucfirst($day) }}</span>
+                                </label>
                             </div>
                             
-                            <div class="day-hours">
-                                @if($isWeekend)
-                                    <div class="off-day-message">Off Day</div>
-                                @else
-                                    <div class="morning-hours">
+                            <div class="time-slots" id="times-{{ $day }}">
+                                <div class="working-hours {{ $isActive ? '' : 'hidden' }}">
+                                    <div class="time-slot">
                                         <input type="time" 
                                             name="morning_start[{{ $day }}]" 
                                             class="time-input" 
-                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_start)->format('H:i') : '08:00' }}">
+                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_start)->format('H:i') : '08:00' }}"
+                                            {{ $isActive ? '' : 'disabled' }}>
                                         <span>to</span>
                                         <input type="time" 
                                             name="morning_end[{{ $day }}]" 
                                             class="time-input" 
-                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_end)->format('H:i') : '12:00' }}">
+                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_end)->format('H:i') : '12:00' }}"
+                                            {{ $isActive ? '' : 'disabled' }}>
                                     </div>
-                                    <div class="afternoon-hours">
+                                    <div class="time-slot">
                                         <input type="time" 
                                             name="afternoon_start[{{ $day }}]" 
                                             class="time-input" 
-                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_start)->format('H:i') : '13:00' }}">
+                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_start)->format('H:i') : '13:00' }}"
+                                            {{ $isActive ? '' : 'disabled' }}>
                                         <span>to</span>
                                         <input type="time" 
                                             name="afternoon_end[{{ $day }}]" 
                                             class="time-input" 
-                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_end)->format('H:i') : '17:00' }}">
+                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_end)->format('H:i') : '17:00' }}"
+                                            {{ $isActive ? '' : 'disabled' }}>
                                     </div>
-                                @endif
+                                </div>
+                                <div class="off-day-message {{ $isActive ? 'hidden' : '' }}">Off Day</div>
                             </div>
                         </div>
                     @endforeach
@@ -2207,5 +2204,50 @@ async function updateLeaveStatus(select, leaveId) {
                 modal.style.display = 'none';
             }
         }
+
+        // Initialize working hours state
+        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        days.forEach(day => {
+            const checkbox = document.getElementById(`checkbox-${day}`);
+            if (checkbox) {
+                toggleWorkingHoursModal(day);
+            }
+        });
     }
+
+    // New toggle function specifically for modal
+    function toggleWorkingHoursModal(day) {
+        const checkbox = document.getElementById(`checkbox-${day}`);
+        const timesContainer = document.getElementById(`times-${day}`);
+        const workingHours = timesContainer.querySelector('.working-hours');
+        const offDayMessage = timesContainer.querySelector('.off-day-message');
+        
+        if (checkbox.checked) {
+            workingHours.style.display = 'flex';
+            offDayMessage.style.display = 'none';
+            workingHours.querySelectorAll('input[type="time"]').forEach(input => {
+                input.disabled = false;
+            });
+        } else {
+            workingHours.style.display = 'none';
+            offDayMessage.style.display = 'block';
+            workingHours.querySelectorAll('input[type="time"]').forEach(input => {
+                input.disabled = true;
+            });
+        }
+    }
+
+    // Update the checkbox event listeners in modal content
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('editUserModal');
+        if (modal) {
+            const checkboxes = modal.querySelectorAll('.day-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const day = this.id.replace('checkbox-', '');
+                    toggleWorkingHoursModal(day);
+                });
+            });
+        }
+    });
 </script>
