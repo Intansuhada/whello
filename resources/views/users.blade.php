@@ -41,16 +41,26 @@
 
                         <!-- User profiles -->
                         @foreach ($users as $user)
-                            <div class="user-profile" data-user-id="{{ $user->id }}" data-email="{{ $user->email }}">
-                                <img src="{{ $user->profile && $user->profile->avatar ? Storage::url($user->profile->avatar) : asset('images/change-photo.svg') }}" 
-                                     alt="Avatar" 
-                                     class="profile-img">
-                                <div class="profile-info">
-                                    <p class="profile-name">{{ $user->profile ? $user->profile->name : $user->email }}</p>
-                                    <p class="profile-position">{{ $user->profile?->jobTitle?->name ?? 'No Position' }}</p>
-                                </div>
+                        <div class="user-profile" 
+                            data-user-id="{{ $user->id }}" 
+                            data-email="{{ $user->email }}"
+                            data-job-title="{{ $user->profile?->jobTitle?->name ?? 'No Position' }}"
+                            data-pay-per-hour="{{ $user->profile?->pay_per_hour ?? 0 }}"
+                            data-daily-capacity="{{ $user->profile?->daily_capacity ?? 0 }}">
+                            
+                            <img src="{{ $user->profile && $user->profile->avatar ? Storage::url($user->profile->avatar) : asset('images/change-photo.svg') }}" 
+                                alt="Avatar" 
+                                class="profile-img">
+                                
+                            <div class="profile-info">
+                                <p class="profile-name">{{ $user->profile ? $user->profile->name : $user->email }}</p>
+                                <p class="profile-position">{{ $user->profile?->jobTitle?->name ?? 'No Position' }}</p>
                             </div>
-                        @endforeach
+
+                         
+                        </div>
+                    @endforeach
+                    
                         @if (!empty($inactivatedAccounts))
                             <hr>
                             @foreach ($inactivatedAccounts as $account)
@@ -69,42 +79,47 @@
                             <div class="detail-info">
                                 <!-- User Info Header -->
                                 <div class="detail-header">
-                                    <div class="detail-header-left">
-                                        <div class="user-detail-avatar">
-                                            <img src="{{ isset($selectedUser) ? ($selectedUser->profile && $selectedUser->profile->avatar ? Storage::url($selectedUser->profile->avatar) : asset('images/change-photo.svg')) : asset('images/change-photo.svg') }}" alt="Profile Photo" id="detail-avatar">
-                                        </div>
-                                        <div class="detail-text">
-                                            <span class="detail-name" id="detail-name">{{ isset($selectedUser) ? ($selectedUser->profile ? $selectedUser->profile->name : $selectedUser->email) : '' }}</span>
-
-                                            <div class="detail-info">
-                                                
-                                                <span class="detail-email" id="detail-id">{{ isset($selectedUser) ? $selectedUser->email : '' }}</span>
-                                                <span class="detail-job">{{ isset($selectedUser) ? ($selectedUser->profile?->jobTitle?->name ?? 'No Position') : '' }}</span>
-                                                <span class="detail-info">Rp{{ number_format(isset($selectedUser) ? ($selectedUser->profile?->pay_per_hour ?? 0) : 0, 0, ',', '.') }}/hours</span>
-                                                <span class="detail-info">{{ isset($selectedUser) ? ($selectedUser->profile?->daily_capacity ?? 0) : 0 }} hours/day</span>
+                                    <div class="detail-header-content">
+                                        <div class="detail-header-left">
+                                            <div class="user-detail-avatar">
+                                                <img src="{{ isset($selectedUser) ? ($selectedUser->profile && $selectedUser->profile->avatar ? Storage::url($selectedUser->profile->avatar) : asset('images/change-photo.svg')) : asset('images/change-photo.svg') }}" alt="Profile Photo" id="detail-avatar">
+                                            </div>
+                                            <div class="detail-text">
+                                                <div class="detail-main">
+                                                    <span class="detail-name" id="detail-name">{{ isset($selectedUser) ? ($selectedUser->profile ? $selectedUser->profile->name : $selectedUser->email) : '' }}</span>
+                                                    <div class="detail-info-row">
+                                                        <span class="detail-email" id="detail-id">{{ isset($selectedUser) ? $selectedUser->email : '' }}</span>
+                                                        <span class="separator">•</span>
+                                                        <span class="detail-job" id="detail-jobTitle">{{ isset($selectedUser) ? ($selectedUser->profile?->jobTitle?->name ?? 'No Position') : '' }}</span>
+                                                        <span class="separator">•</span>
+                                                        <span class="detail-info" id="detail-payPerHour">Rp{{ number_format(isset($selectedUser) ? ($selectedUser->profile?->pay_per_hour ?? 0) : 0, 0, ',', '.') }}/Hours</span>
+                                                        <span class="separator">•</span>
+                                                        <span class="detail-info" id="detail-dailyCapacity">{{ isset($selectedUser) ? ($selectedUser->profile?->daily_capacity ?? 0) : 0 }} Hours/Days</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    
-                                    @if(!isset($showEditForm))
-                                    <div class="detail-buttons">
-                                        <a href="{{ route('users.edit', isset($selectedUser) ? $selectedUser->id : ($user->id ?? 0)) }}" class="users-edit-btn">
-                                            <img src="{{ asset('images/edit.svg') }}" alt="edit">
-                                            Edit
-                                        </a>
-                                        
-                                        <form action="{{ route('users.destroy', isset($selectedUser) ? $selectedUser->id : ($user->id ?? 0)) }}" method="POST">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="users-rmv-btn" onclick="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
-                                                <img src="{{ asset('images/remove.svg') }}" alt="remove">
-                                                Remove
+                
+                                        @if(!isset($showEditForm))
+                                        <div class="header-actions">
+                                            <button class="header-btn edit" onclick="openEditModal()">
+                                                <img src="{{ asset('images/edit.svg') }}" alt="edit">
+                                                Edit
                                             </button>
-                                        </form>
+                                            
+                                            <form action="{{ route('users.destroy', isset($selectedUser) ? $selectedUser->id : ($user->id ?? 0)) }}" method="POST" class="inline-form">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="header-btn delete" onclick="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
+                                                    <img src="{{ asset('images/remove.svg') }}" alt="remove">
+                                                    Remove
+                                                </button>
+                                            </form>
+                                        </div>
+                                        @endif
                                     </div>
-                                    @endif
                                 </div>
-
+                
                                 <!-- Edit Form -->
                                 @if(isset($showEditForm) && isset($selectedUser))
                                 <div class="edit-user-form">
@@ -114,7 +129,7 @@
                                     <form action="{{ route('users.update', $selectedUser->id) }}" method="POST">
                                         @csrf
                                         @method('PUT')
-
+                
                                         <div class="form-group">
                                             <label for="name">Name</label>
                                             <input type="text" id="name" name="name" 
@@ -123,7 +138,7 @@
                                                 <span class="error">{{ $message }}</span>
                                             @enderror
                                         </div>
-
+                
                                         <div class="form-group">
                                             <label for="department_id">Department</label>
                                             <div class="custom-select">
@@ -142,7 +157,7 @@
                                                 <div class="select-arrow">▼</div>
                                             </div>
                                         </div>
-
+                
                                         <div class="form-group">
                                             <label for="job_title_id">Job Title</label>
                                             <div class="custom-select">
@@ -161,9 +176,9 @@
                                                 <div class="select-arrow">▼</div>
                                             </div>
                                         </div>
-
+                
                                       <!-- Role Permission -->
-
+                
                                       <div class="form-group">
                                         <label for="role">User Role</label>
                                         <div class="custom-select">
@@ -183,7 +198,7 @@
                                         </div>
                                     </div>
                                     
-
+                
                                         <!-- Pay Per Hour -->
                                         <div class="form-group">
                                             <label for="pay_per_hour">Pay Per Hour</label>
@@ -204,25 +219,24 @@
                                                 <span class="error">{{ $message }}</span>
                                             @enderror
                                         </div>
-
-
+                
+                
                                         <!-- Working Days Section -->
                                         <div class="form-working-day">
                                             <p><strong>Default Working Days & Hours </strong></p>
                                             <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
                                         </div>
-
+                
                                         <div class="working-days-container">
                                             <div class="working-days-header">
-                                                <div class="header-day">Day</div>
-                                                <div class="header-morning">Morning</div>
+                                                <div class="header-day">Day</                                                <div class="header-morning">Morning</div>
                                                 <div class="header-afternoon">Afternoon</div>
                                             </div>
-
+                
                                             @php
                                                 $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
                                             @endphp
-
+                
                                             @foreach($days as $day)
                                                 @php
                                                     $workingHour = $selectedUser->workingHours->where('day', $day)->first();
@@ -530,7 +544,7 @@
 .invite-popup {
     display: none;
     position: fixed;
-    top: 50%;
+    top: 100%;
     left: 0;
     width: 100%;
     height: 100%;
@@ -542,7 +556,7 @@
 
 .popup-content {
     position: fixed;
-    top: 50%;
+    top: 30%;
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: white;
@@ -805,37 +819,88 @@
 }
 
 .detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 20px;
+    padding: 24px;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     margin-bottom: 20px;
 }
 
+.detail-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+
 .detail-header-left {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 16px;
 }
 
 .detail-text {
     display: flex;
     flex-direction: column;
+    gap: 8px;
+}
+
+.detail-main {
+    display: flex;
+    flex-direction: column;
     gap: 4px;
 }
 
-.detail-name {
-    font-size: 20px;
-    font-weight: 600;
-    color: #2D3748;
+.detail-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #718096;
+    font-size: 14px;
+    flex-wrap: wrap;
 }
 
-.detail-email {
-    font-size: 14px;
-    color: #718096;
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.header-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.header-btn.edit {
+    color: #3182CE;
+}
+
+.header-btn.edit:hover {
+    background: #EBF8FF;
+}
+
+.header-btn.delete {
+    color: #E53E3E;
+}
+
+.header-btn.delete:hover {
+    background: #FED7D7;
+}
+
+.inline-form {
+    display: inline;
+    margin: 0;
+    padding: 0;
 }
 
 .edit-user-form {
@@ -1272,10 +1337,192 @@
 }
 
 .detail-job {
-    color: #4A5568;
-    font-weight: 500;
+    color: inherit; /* Mengikuti warna default elemen lain */
+    font-weight: normal; /* Menyamakan ketebalan dengan elemen lain */
 }
+
+.detail-info-row {
+    display: flex;
+    gap: 15px; /* Jarak antar elemen */
+    flex-wrap: wrap; /* Jika tidak cukup ruang, elemen akan turun ke baris berikutnya */
+    align-items: center; /* Agar elemen sejajar */
+}
+
+.detail-info-row span {
+    white-space: nowrap; /* Mencegah teks berpindah ke baris baru */
+}
+
 // ...existing styles...
+
+.user-profile {
+    position: relative;
+    padding-right: 90px; /* Make space for action buttons */
+}
+
+.action-buttons {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.user-profile:hover .action-buttons {
+    opacity: 1;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    background: transparent;
+}
+
+.action-btn img {
+    width: 16px;
+    height: 16px;
+}
+
+.edit-btn:hover {
+    background-color: #EBF8FF;
+}
+
+.delete-btn:hover {
+    background-color: #FED7D7;
+}
+
+.delete-form {
+    margin: 0;
+    padding: 0;
+}
+
+/* Tooltip on hover */
+.action-btn[title]:hover:after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    color: white;
+    background: rgba(0,0,0,0.8);
+    z-index: 10;
+}
+
+.detail-info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.detail-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.header-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.header-btn.edit {
+    color: #3182CE;
+}
+
+.header-btn.edit:hover {
+    background: #EBF8FF;
+}
+
+.header-btn.delete {
+    color: #E53E3E;
+}
+
+.header-btn.delete:hover {
+    background: #FED7D7;
+}
+
+.header-btn img {
+    width: 16px;
+    height: 16px;
+}
+
+.inline-form {
+    display: inline;
+    margin: 0;
+    padding: 0;
+}
+
+.detail-header-content {
+    width: 100%;
+}
+
+.detail-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding-right: 16px;
+}
+
+.info-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.header-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
 </style>
 
 @push('scripts')
@@ -1372,7 +1619,6 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const emailInput = document.getElementById('invite-email');
             const submitBtn = document.getElementById('submitBtn');
-            
             if (!emailInput || !emailInput.value) {
                 showAlert('Please enter an email address', 'danger');
                 return;
@@ -1413,56 +1659,69 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle user profile click
     userProfiles.forEach(profile => {
-        profile.addEventListener('click', function() {
+        profile.addEventListener('click', function () {
             const userId = this.getAttribute('data-user-id');
             const userName = this.querySelector('.profile-name').textContent;
             const userEmail = this.getAttribute('data-email');
             const userAvatar = this.querySelector('img').src;
 
-            // Update URL - Fix the URL construction
+            // Ambil data tambahan
+            const userJobTitle = this.getAttribute('data-job-title') || 'No Position';
+            const userPayPerHour = this.getAttribute('data-pay-per-hour') || '0';
+            const userDailyCapacity = this.getAttribute('data-daily-capacity') || '0';
+
+            // Update URL tanpa reload
             const baseUrl = window.location.origin + '/users';
             const newUrl = `${baseUrl}/${userId}`;
             window.history.pushState({ userId }, '', newUrl);
 
-            // Update user detail section
-            document.getElementById('detail-name').textContent = userName;
-            document.getElementById('detail-id').textContent = `Email: ${userEmail}`;
-            document.getElementById('detail-avatar').src = userAvatar;
+            // Pastikan elemen target tersedia sebelum memperbarui
+            if (document.getElementById('detail-name')) {
+                document.getElementById('detail-name').textContent = userName;
+            }
+            if (document.getElementById('detail-id')) {
+                document.getElementById('detail-id').innerHTML = `•&nbsp;&nbsp;&nbsp;${userEmail}`;
+            }
+            if (document.getElementById('detail-avatar')) {
+                document.getElementById('detail-avatar').src = userAvatar;
+            }
 
-            // Update tab links with new user ID
+            // Perbarui job title, pay per hour, dan daily capacity
+            if (document.getElementById('detail-jobTitle')) {
+                document.getElementById('detail-jobTitle').textContent = userJobTitle;
+            }
+            if (document.getElementById('detail-payPerHour')) {
+                document.getElementById('detail-payPerHour').textContent = `Rp${parseInt(userPayPerHour).toLocaleString('id-ID')}/Hours`;
+            }
+            if (document.getElementById('detail-dailyCapacity')) {
+                document.getElementById('detail-dailyCapacity').textContent = `${userDailyCapacity} Hours/Days`;
+            }
+
+            // Update link tab dengan ID pengguna baru
             document.querySelectorAll('.tablink').forEach(tab => {
                 const oldHref = tab.getAttribute('href');
                 const newHref = oldHref.replace(/\/(\d+|0)(?=[^/]*$)/, `/${userId}`);
                 tab.setAttribute('href', newHref);
             });
 
-            // Check if we're in edit mode
+            // Cek apakah dalam mode edit
             const isEditMode = document.querySelector('.edit-user-form') !== null;
-            
-            // Show appropriate sections based on mode
-            userDetailSection.style.display = 'flex';
-            if (!isEditMode) {
-                tabMenuSection.style.display = 'block';
-                tabContentSection.style.display = 'block';
-            } else {
-                tabMenuSection.style.display = 'none';
-                tabContentSection.style.display = 'none';
-            }
-            noUserSelected.style.display = 'none';
 
-            // Update form if in edit mode
-            if (isEditMode) {
-                const editForm = document.querySelector('.edit-user-form');
-                if (editForm) {
-                    editForm.style.display = 'block';
-                }
-            }
+            // Tampilkan atau sembunyikan elemen berdasarkan mode
+            if (userDetailSection) userDetailSection.style.display = 'flex';
+            if (tabMenuSection) tabMenuSection.style.display = isEditMode ? 'none' : 'block';
+            if (tabContentSection) tabContentSection.style.display = isEditMode ? 'none' : 'block';
+            if (noUserSelected) noUserSelected.style.display = 'none';
 
-            // Set active class on selected profile
+            // Tampilkan form edit jika ada
+            const editForm = document.querySelector('.edit-user-form');
+            if (editForm) editForm.style.display = 'block';
+
+            // Tandai profil yang sedang aktif
             userProfiles.forEach(p => p.classList.remove('active'));
             this.classList.add('active');
 
-            // Update URL edit dan delete buttons if they exist
+            // Perbarui tombol edit dan hapus jika ada
             const editBtn = document.querySelector('.users-edit-btn');
             const deleteForm = document.querySelector('form[action*="destroy"]');
             if (editBtn) editBtn.href = editBtn.href.replace(/\/\d+\/edit/, `/${userId}/edit`);
@@ -1486,7 +1745,6 @@ document.addEventListener('DOMContentLoaded', function() {
     tablinks.forEach(tablink => {
         tablink.addEventListener('click', function(e) {
             e.preventDefault();
-            
             // Remove active class from all tabs
             tablinks.forEach(tab => tab.classList.remove('active'));
             
@@ -1559,7 +1817,7 @@ document.addEventListener('DOMContentLoaded', function() {
         alertElement.classList.remove('alert-success', 'alert-danger');
         alertElement.classList.add(`alert-${type}`);
         alertContainer.style.display = 'block';
-        
+
         setTimeout(() => {
             alertElement.style.animation = 'slideOut 0.3s ease-in forwards';
             setTimeout(() => {
@@ -1593,17 +1851,8 @@ document.addEventListener('DOMContentLoaded', function() {
         leavePlannerTab.addEventListener('click', async function() {
             const userId = window.location.pathname.split('/').pop();
             const leavePlannerContent = document.getElementById('leavePlannerContent');
-            
-            if (!userId || isNaN(userId)) {
-                leavePlannerContent.innerHTML = `
-                    <div class="no-data-message">
-                        Please select a user to view their leave plans
-                    </div>`;
-                return;
-            }
-
             leavePlannerContent.innerHTML = '<div class="loading-message">Loading leave plans...</div>';
-            
+
             try {
                 const response = await fetch(`/users/${userId}/leave-plans`);
                 const data = await response.json();
@@ -1705,4 +1954,262 @@ async function updateLeaveStatus(select, leaveId) {
         select.value = select.querySelector('[selected]').value;
     }
 }
+</script>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit User Profile</h3>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <!-- Move your existing edit form here -->
+            <form id="editUserForm" method="POST">
+                @csrf
+                @method('PUT')
+                <!-- Your existing form fields go here -->
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" 
+                        value="{{ old('name', $selectedUser->profile->name ?? '') }}" required>
+                    @error('name')
+                        <span class="error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label for="department_id">Department</label>
+                    <div class="custom-select">
+                        <input type="text" class="form-control select-display" 
+                            value="{{ $selectedUser->profile->department->name ?? '' }}" 
+                            readonly placeholder="Select Department">
+                        <select id="department_id" name="department_id" class="hidden-select" required>
+                            <option value="">Select Department</option>
+                            @foreach($departments as $department)
+                                <option value="{{ $department->id }}" 
+                                    {{ (old('department_id', $selectedUser->profile->department_id ?? '') == $department->id) ? 'selected' : '' }}>
+                                    {{ $department->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="select-arrow">▼</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="job_title_id">Job Title</label>
+                    <div class="custom-select">
+                        <input type="text" class="form-control select-display" 
+                            value="{{ $selectedUser->profile->jobTitle->name ?? '' }}" 
+                            readonly placeholder="Select Job Title">
+                        <select id="job_title_id" name="job_title_id" class="hidden-select" required>
+                            <option value="">Select Job Title</option>
+                            @foreach($jobTitles as $jobTitle)
+                                <option value="{{ $jobTitle->id }}"
+                                    {{ (old('job_title_id', $selectedUser->profile->job_title_id ?? '') == $jobTitle->id) ? 'selected' : '' }}>
+                                    {{ $jobTitle->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="select-arrow">▼</div>
+                    </div>
+                </div>
+
+                <!-- Role Permission -->
+
+                <div class="form-group">
+                    <label for="role">User Role</label>
+                    <div class="custom-select">
+                        <input type="text" class="form-control select-display" 
+                            value="{{ ucfirst($selectedUser->role->name ?? '') }}" 
+                            readonly placeholder="Select Role">
+                        <select id="role" name="role" class="hidden-select" required>
+                            <option value="">Select Role</option>
+                            @foreach($roles ?? [] as $role)
+                                <option value="{{ $role->id }}" 
+                                    {{ ($selectedUser->role_id ?? '') == $role->id ? 'selected' : '' }}>
+                                    {{ ucfirst($role->name) }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="select-arrow">▼</div>
+                    </div>
+                </div>
+
+                <!-- Pay Per Hour -->
+                <div class="form-group">
+                    <label for="pay_per_hour">Pay Per Hour</label>
+                    <input type="number" id="pay_per_hour" name="pay_per_hour" 
+                        value="{{ old('pay_per_hour', $selectedUser->profile->pay_per_hour ?? '') }}" 
+                        min="0" step="0.01" required>
+                    @error('pay_per_hour')
+                        <span class="error">{{ $message }}</span>
+                    @enderror
+                </div>
+                <!-- Daily Capacity -->
+                <div class="form-group">
+                    <label for="daily_capacity">Daily Capacity (Hours)</label>
+                    <input type="number" id="daily_capacity" name="daily_capacity" 
+                        value="{{ old('daily_capacity', $selectedUser->profile->daily_capacity ?? '') }}" 
+                        min="0" step="0.1" required>
+                    @error('daily_capacity')
+                        <span class="error">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <!-- Working Days Section -->
+                <div class="form-working-day">
+                    <p><strong>Default Working Days & Hours </strong></p>
+                    <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+                </div>
+
+                <div class="working-days-container">
+                    <div class="working-days-header">
+                        <div class="header-day">Day</div>
+                        <div class="header-morning">Morning</div>
+                        <div class="header-afternoon">Afternoon</div>
+                    </div>
+
+                    @php
+                        $days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                    @endphp
+
+                    @foreach($days as $day)
+                        @php
+                            $workingHour = $selectedUser->workingHours->where('day', $day)->first();
+                            $isActive = $workingHour ? $workingHour->is_active : false;
+                            $isWeekend = in_array($day, ['saturday', 'sunday']);
+                        @endphp
+                        
+                        <div class="working-day-row {{ $isWeekend ? 'weekend' : '' }}">
+                            <div class="day-selector">
+                                <input type="checkbox" 
+                                    id="{{ $day }}" 
+                                    name="working_days[{{ $day }}]" 
+                                    class="round-checkbox"
+                                    {{ $isWeekend ? 'disabled' : ($isActive ? 'checked' : '') }}>
+                                <label for="{{ $day }}">{{ ucfirst($day) }}</label>
+                            </div>
+                            
+                            <div class="day-hours">
+                                @if($isWeekend)
+                                    <div class="off-day-message">Off Day</div>
+                                @else
+                                    <div class="morning-hours">
+                                        <input type="time" 
+                                            name="morning_start[{{ $day }}]" 
+                                            class="time-input" 
+                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_start)->format('H:i') : '08:00' }}">
+                                        <span>to</span>
+                                        <input type="time" 
+                                            name="morning_end[{{ $day }}]" 
+                                            class="time-input" 
+                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->morning_end)->format('H:i') : '12:00' }}">
+                                    </div>
+                                    <div class="afternoon-hours">
+                                        <input type="time" 
+                                            name="afternoon_start[{{ $day }}]" 
+                                            class="time-input" 
+                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_start)->format('H:i') : '13:00' }}">
+                                        <span>to</span>
+                                        <input type="time" 
+                                            name="afternoon_end[{{ $day }}]" 
+                                            class="time-input" 
+                                            value="{{ $workingHour ? \Carbon\Carbon::parse($workingHour->afternoon_end)->format('H:i') : '17:00' }}">
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn-update">
+                        Update Profile
+                    </button>
+                    <a href="{{ route('users.index') }}" class="btn-cancel">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1000;
+    }
+
+    .modal-content {
+        position: relative;
+        background-color: #fff;
+        margin: 5% auto;
+        padding: 20px;
+        width: 70%;
+        max-width: 800px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .close-modal {
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #666;
+    }
+
+    .close-modal:hover {
+        color: #333;
+    }
+
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+        padding: 0 10px;
+    }
+</style>
+
+<script>
+    function openEditModal() {
+        const modal = document.getElementById('editUserModal');
+        const closeBtn = modal.querySelector('.close-modal');
+        const form = document.getElementById('editUserForm');
+        const userId = window.location.pathname.split('/').pop();
+        
+        // Update form action URL
+        form.action = `/users/${userId}`;
+        
+        // Show modal
+        modal.style.display = 'block';
+
+        // Close modal handlers
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    }
 </script>

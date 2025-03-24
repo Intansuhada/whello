@@ -2,6 +2,14 @@
 
 @section('system-content')
 <section class="content-detail active" id="general-workspace">
+    <!-- Add alert container -->
+    <div id="alertContainer" class="mb-4" style="display: none;">
+        <div class="alert alert-dismissible fade show" role="alert">
+            <span id="alertMessage"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+
     <div class="notifications-wrapper">
         <div class="settings-container">
             <form id="workspaceForm" action="{{ route('system.workspace.update') }}" method="POST" enctype="multipart/form-data">
@@ -684,22 +692,57 @@ function deleteJobTitle(id) {
         text: "You won't be able to revert this!",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '<i class="fas fa-trash-alt mr-2"></i>Yes, delete it!',
+        cancelButtonText: '<i class="fas fa-times mr-2"></i>Cancel',
+        customClass: {
+            popup: 'swal2-popup-custom',
+            confirmButton: 'btn btn-danger btn-custom-class mr-3',
+            cancelButton: 'btn btn-secondary btn-custom-class',
+            icon: 'swal2-icon-custom'
+        },
+        buttonsStyling: false,
+        padding: '2rem',
+        showClass: {
+            popup: 'animate__animated animate__fadeIn'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__fadeOut'
+        }
     }).then((result) => {
         if (result.isConfirmed) {
             fetch(`/job-titles/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
                 }
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Swal.fire('Deleted!', data.message, 'success');
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: 'Job title has been deleted.',
+                        customClass: {
+                            popup: 'swal2-popup-custom'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: data.message || 'Failed to delete job title',
+                        customClass: {
+                            popup: 'swal2-popup-custom'
+                        }
+                    });
                 }
             });
         }
@@ -713,22 +756,57 @@ function deleteDepartment(id) {
         text: "You won't be able to revert this!",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '<i class="fas fa-trash-alt mr-2"></i>Yes, delete it!',
+        cancelButtonText: '<i class="fas fa-times mr-2"></i>Cancel',
+        customClass: {
+            popup: 'swal2-popup-custom',
+            confirmButton: 'btn btn-danger btn-custom-class mr-3',
+            cancelButton: 'btn btn-secondary btn-custom-class',
+            icon: 'swal2-icon-custom'
+        },
+        buttonsStyling: false,
+        padding: '2rem',
+        showClass: {
+            popup: 'animate__animated animate__fadeIn'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__fadeOut'
+        }
     }).then((result) => {
         if (result.isConfirmed) {
             fetch(`/departments/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
                 }
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Swal.fire('Deleted!', data.message, 'success');
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: 'Department has been deleted.',
+                        customClass: {
+                            popup: 'swal2-popup-custom'
+                        },
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: data.message || 'Failed to delete department',
+                        customClass: {
+                            popup: 'swal2-popup-custom'
+                        }
+                    });
                 }
             });
         }
@@ -1080,6 +1158,119 @@ function toggleEditMode() {
     }
 }
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const alertContainer = document.getElementById('alertContainer');
+    const alertElement = alertContainer.querySelector('.alert');
+    const alertMessage = document.getElementById('alertMessage');
+
+    function showAlert(message, type = 'success') {
+        const icon = type === 'success' 
+            ? '<svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg>'
+            : '<svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+
+        alertMessage.innerHTML = `
+            <div class="alert-content">
+                ${icon}
+                <strong>${message}</strong>
+            </div>
+        `;
+        alertElement.classList.remove('alert-success', 'alert-danger');
+        alertElement.classList.add(`alert-${type}`);
+        alertContainer.style.display = 'block';
+        alertContainer.style.animation = 'fadeInOut 2s ease-in-out forwards';
+        
+        setTimeout(() => {
+            alertContainer.style.display = 'none';
+        }, 2000);
+    }
+
+    window.hideAlert = function() {
+        alertContainer.style.animation = 'fadeOutScale 0.2s ease-out forwards';
+        setTimeout(() => {
+            alertContainer.style.display = 'none';
+            alertContainer.style.animation = '';
+        }, 200);
+    }
+
+    // ...existing code...
+});
+</script>
+
+<style>
+/* Add alert styles */
+#alertContainer {
+    position: relative;
+    width: 100%;
+    margin: 0 0 24px;
+}
+
+.alert {
+    position: relative;
+    padding: 14px;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid #dbeafe;
+    background-color: #eff6ff;
+}
+
+.alert-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+}
+
+.alert-icon {
+    width: 20px;
+    height: 20px;
+    color: #2563eb;
+}
+
+.alert strong {
+    font-size: 14px;
+    color: #1e40af;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    border-color: #1e40af;
+    color: #1e40af;
+}
+
+.alert-danger {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #b91c1c;
+}
+
+.btn-close {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-8px); }
+    15% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-8px); }
+}
+
+/* ...existing styles... */
+</style>
 @endpush
 
 <style>
@@ -1812,7 +2003,7 @@ h2.settings-main-title,
 .profile-photo-wrapper {
     width: 150px;
     height: 150px;
-    border-radius: 0.5rem;
+    border-radius: 1rem;
     overflow: hidden;
     border: 2px solid #e5e7eb;
     position: relative;

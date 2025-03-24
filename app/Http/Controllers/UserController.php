@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Models\User;
+use App\Models\Role; // Add this line
 use App\Mail\UserInvitationMail;
 use App\Models\InactivatedAccount;
 use App\Models\Department;
@@ -45,7 +46,22 @@ class UserController extends Controller
             ];
         }
         
-        return view('users', compact('users', 'leavePlans', 'selectedUser', 'detailUser', 'showUserDetail'));
+        // Add these variables for the edit modal
+        $departments = Department::all();
+        $jobTitles = JobTitle::all();
+        $roles = Role::all();
+        
+        return view('users', [ // Changed from 'users.index' to just 'users'
+            'users' => $users,
+            'leavePlans' => $leavePlans,
+            'selectedUser' => $selectedUser,
+            'detailUser' => $detailUser,
+            'showUserDetail' => $showUserDetail,
+            'departments' => $departments,
+            'jobTitles' => $jobTitles, 
+            'roles' => $roles,
+            'inactivatedAccounts' => InactivatedAccount::all() // Add this line to get pending invites
+        ]);
     }
 
     /**

@@ -172,11 +172,9 @@
                                                             <a href="{{ route('system.leave-types.edit', $leaveType->id) }}" class="btn btn-sm btn-edit">
                                                                 Edit
                                                             </a>
-                                                            <form id="delete-leave-type-{{ $leaveType->id }}" 
-                                                                  action="{{ route('system.leave-types.destroy', $leaveType->id) }}" 
-                                                                  method="POST" class="d-inline">
+                                                            <form action="{{ route('system.leave-types.destroy', $leaveType->id) }}" method="POST" class="d-inline">
                                                                 @csrf
-                                                                <button type="submit" class="btn btn-sm btn-delete" onclick="return confirmDeleteLeaveType(event)">Delete</button>
+                                                                <button type="button" onclick="confirmDelete(this)" class="btn btn-sm btn-delete">Delete</button>
                                                             </form>
                                                         </div>
                                                     </td>
@@ -226,11 +224,9 @@
                                                             <a href="{{ route('system.holidays.edit', $holiday->id) }}" class="btn btn-sm btn-edit">
                                                                 Edit
                                                             </a>
-                                                            <form id="delete-holiday-{{ $holiday->id }}"
-                                                                  action="{{ route('system.holidays.destroy', $holiday->id) }}"
-                                                                  method="POST" class="d-inline">
-                                                                @csrf 
-                                                                <button type="submit" class="btn btn-sm btn-delete" onclick="return confirmDelete(event)">Delete</button>
+                                                            <form action="{{ route('system.holidays.destroy', $holiday->id) }}" method="POST" class="d-inline">
+                                                                @csrf
+                                                                <button type="button" onclick="confirmDelete(this)" class="btn btn-sm btn-delete">Delete</button>
                                                             </form>
                                                         </div>
                                                     </td>
@@ -565,41 +561,50 @@ function deleteHoliday(id) {
     });
 }
 
-function confirmDelete(e) {
-    e.preventDefault();
+function confirmDelete(button) {
     Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
+        title: 'Konfirmasi Hapus',
+        text: "Apakah Anda yakin ingin menghapus ini?",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'No, cancel!'
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
     }).then((result) => {
         if (result.isConfirmed) {
-            e.target.closest('form').submit();
+            // Submit form jika user mengkonfirmasi
+            button.closest('form').submit();
         }
     });
-    return false;
 }
 
-function confirmDeleteLeaveType(e) {
-    e.preventDefault();
-    
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'No, cancel!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            e.target.closest('form').submit();
+// Tambahkan event listener untuk semua button delete
+document.addEventListener('DOMContentLoaded', function() {
+    // Tangkap semua form yang memiliki button delete
+    document.querySelectorAll('form').forEach(form => {
+        if (form.querySelector('.delete-btn')) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This action cannot be undone!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submit();
+                    }
+                });
+            });
         }
     });
-    
-    return false;
-}
+});
 </script>
 @endpush
 

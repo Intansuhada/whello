@@ -106,15 +106,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const alertMessage = document.getElementById('alertMessage');
 
     function showAlert(message, type = 'success') {
-        alertMessage.textContent = message;
+        const icon = type === 'success' 
+            ? '<svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg>'
+            : '<svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+
+        alertMessage.innerHTML = `
+            <div class="alert-content">
+                ${icon}
+                <strong>${message}</strong>
+            </div>
+        `;
         alertElement.classList.remove('alert-success', 'alert-danger');
         alertElement.classList.add(`alert-${type}`);
         alertContainer.style.display = 'block';
-
-        // Auto hide after 3 seconds
+        alertContainer.style.animation = 'fadeInOut 2s ease-in-out forwards';
+        
         setTimeout(() => {
             alertContainer.style.display = 'none';
-        }, 3000);
+        }, 2000);
+    }
+
+    window.hideAlert = function() {
+        alertContainer.style.animation = 'fadeOutScale 0.2s ease-out forwards';
+        setTimeout(() => {
+            alertContainer.style.display = 'none';
+            alertContainer.style.animation = '';
+        }, 200);
     }
 
     function resetPasswordFields() {
@@ -327,23 +344,71 @@ input:checked + .slider:before {
     }
 }
 
-/* Add these new styles */
-.alert {
-    padding: 1rem;
-    border-radius: 0.375rem;
+/* Update Alert Container and Alert Styles */
+#alertContainer {
     position: relative;
+    width: 100%;
+    margin: 0 0 24px;
+}
+
+.alert {
+    position: relative;
+    padding: 14px;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid #dbeafe;
+    background-color: #eff6ff;
+}
+
+.alert-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+}
+
+.alert-icon {
+    width: 20px;
+    height: 20px;
+    color: #2563eb;
+}
+
+.alert strong {
+    font-size: 14px;
+    color: #1e40af;
+    font-weight: 500;
+}
+
+/* Menghapus style untuk alert-success dan alert-danger yang mengubah warna background */
+.alert-success, .alert-danger {
+    background-color: #eff6ff;
+    border-color: #dbeafe;
+    color: #1e40af;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-8px); }
+    15% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-8px); }
 }
 
 .alert-success {
-    background-color: #d1fae5;
-    border-color: #34d399;
-    color: #065f46;
+    background: #f0fdf4;
+    border-color:  #1e40af;
+    color:  #1e40af;
+
 }
 
 .alert-danger {
-    background-color: #fee2e2;
-    border-color: #f87171;
-    color: #991b1b;
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #b91c1c;
 }
 
 .btn-close {

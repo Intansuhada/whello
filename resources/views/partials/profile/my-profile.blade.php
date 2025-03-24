@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <div class="alert-container"></div>
 
 <div class="account-security-settings-content">
@@ -27,16 +29,17 @@
                                      alt="Profile Photo" 
                                      id="avatarPreview"
                                      class="profile-photo">
-                            </div>
-                            <div class="photo-actions">
+                                <div class="photo-overlay">
+                                    <label for="avatarInput" class="upload-overlay">
+                                        <i class="fas fa-camera"></i>
+                                        <span>Change Photo</span>
+                                    </label>
+                                    <button type="button" class="delete-photo-btn" id="deletePhotoBtn" 
+                                            {{ !$user->profile?->avatar ? 'style=display:none' : '' }}>
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                                 <input type="file" id="avatarInput" name="avatar" class="hidden" accept="image/*">
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('avatarInput').click()">
-                                    Upload 
-                                </button>
-                                <button type="button" class="btn btn-sm btn-danger" id="deletePhotoBtn" 
-                                        {{ !$user->profile?->avatar ? 'disabled' : '' }}>
-                                    Delete
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -225,8 +228,9 @@
 }
 
 .profile-photo-wrapper {
-    width: 96px;  /* Increased size */
-    height: 96px; /* Increased size */
+    position: relative;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
     overflow: hidden;
     border: 2px solid #e2e8f0;
@@ -234,30 +238,87 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 0 2px rgba(226, 232, 240, 0.5);
-}
-
-.photo-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-}
-
-.btn-sm {
-    padding: 4px 8px;
-    font-size: 12px;
-    line-height: 1.5;
-}
-
-/* Update button styles for smaller buttons */
-.photo-actions .btn {
-    min-width: 80px;
 }
 
 .profile-photo {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: filter 0.2s;
+}
+
+.photo-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+}
+
+.profile-photo-wrapper:hover .photo-overlay {
+    opacity: 1;
+}
+
+.profile-photo-wrapper:hover .profile-photo {
+    filter: blur(2px);
+}
+
+.upload-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+}
+
+.upload-overlay i {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.upload-overlay span {
+    font-size: 14px;
+    text-align: center;
+}
+
+.delete-photo-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    display: none; /* Ubah dari flex ke none */
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #ef4444;
+    font-size: 14px;
+    transition: all 0.2s;
+    z-index: 20;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.delete-photo-btn:hover {
+    background: #ef4444;
+    color: white;
+}
+
+/* Tambahkan style baru untuk mengatur visibility button delete */
+.profile-photo-wrapper:hover .delete-photo-btn {
+    display: flex;
 }
 
 .form-control {
@@ -486,7 +547,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             reader.onload = function(e) {
                 avatarPreview.src = e.target.result;
-                deletePhotoBtn.disabled = false;
+                deletePhotoBtn.style.display = 'flex';
             };
             
             reader.readAsDataURL(this.files[0]);
