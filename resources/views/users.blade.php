@@ -288,12 +288,10 @@
                                         
                                         <!-- Form Actions -->
                                         <div class="form-actions">
-                                            <button type="submit" class="btn-update">
+                                            <div style="flex-grow: 1"></div>
+                                            <button type="submit" class="btn-update" style="background: #000000; color: white; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 500;">
                                                 Update Profile
                                             </button>
-                                            <a href="{{ route('users.index') }}" class="btn-cancel">
-                                                Cancel
-                                            </a>
                                         </div>
                                     </form>
                                 </div>
@@ -2126,12 +2124,10 @@ async function updateLeaveStatus(select, leaveId) {
                 
                 <!-- Form Actions -->
                 <div class="form-actions">
-                    <button type="submit" class="btn-update">
+                    <div style="flex-grow: 1"></div>
+                    <button type="submit" class="btn-update" style="background: #000000; color: white; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 500;">
                         Update Profile
                     </button>
-                    <a href="{{ route('users.index') }}" class="btn-cancel">
-                        Cancel
-                    </a>
                 </div>
             </form>
         </div>
